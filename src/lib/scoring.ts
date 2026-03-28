@@ -25,6 +25,8 @@ import {
   MARKET_CAP_MID,
   CONSECUTIVE_UP_DAYS_HIGH,
   CONSECUTIVE_UP_DAYS_MODERATE,
+  TRADING_EFFICIENCY_HIGH,
+  TRADING_EFFICIENCY_MODERATE,
 } from "./constants";
 
 /**
@@ -52,6 +54,7 @@ function scorePreMarketChange(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate move: ${data.preMarketChangePercent > 0 ? "+" : ""}${data.preMarketChangePercent}%`
           : `Flat: ${data.preMarketChangePercent > 0 ? "+" : ""}${data.preMarketChangePercent}%`,
+    isSimulated: false,
   };
 }
 
@@ -80,6 +83,7 @@ function scoreVolumeRatio(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Above average: ${ratio.toFixed(1)}x`
           : `Low volume: ${ratio.toFixed(1)}x average`,
+    isSimulated: false,
   };
 }
 
@@ -88,9 +92,11 @@ function scoreVolumeRatio(data: TickerData): ScoreCriterion {
  * C3: Gap size evaluation (pre-market price gap vs previous close)
  */
 function scoreGapSize(data: TickerData): ScoreCriterion {
-  const gapPercent = Math.abs(
-    ((data.preMarketPrice - data.prevClose) / data.prevClose) * 100
-  );
+  // #11: Division by zero 방지
+  // #11: Division by zero guard
+  const gapPercent = data.prevClose > 0
+    ? Math.abs(((data.preMarketPrice - data.prevClose) / data.prevClose) * 100)
+    : 0;
   let score = 0;
 
   if (gapPercent >= GAP_LARGE_THRESHOLD) {
@@ -110,6 +116,7 @@ function scoreGapSize(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate gap: ${gapPercent.toFixed(1)}%`
           : `Small gap: ${gapPercent.toFixed(1)}%`,
+    isSimulated: false,
   };
 }
 
@@ -118,6 +125,19 @@ function scoreGapSize(data: TickerData): ScoreCriterion {
  * C4: Proximity to 52-week high
  */
 function score52WeekProximity(data: TickerData): ScoreCriterion {
+  // #5: 52주 데이터 없으면 0점
+  // #5: 0 points when 52-week data is missing
+  if (!data.has52WeekData || data.fiftyTwoWeekHigh === null || data.fiftyTwoWeekHigh <= 0) {
+    return {
+      key: "pricePattern",
+      name: "52W High Proximity",
+      score: 0,
+      maxScore: MAX_SCORE_PER_CRITERION,
+      description: "52-week data unavailable",
+      isSimulated: false,
+    };
+  }
+
   const distanceFromHigh =
     ((data.fiftyTwoWeekHigh - data.preMarketPrice) / data.fiftyTwoWeekHigh) * 100;
   let score = 0;
@@ -139,6 +159,7 @@ function score52WeekProximity(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Close to 52W high (${distanceFromHigh.toFixed(1)}% away)`
           : `Far from 52W high (${distanceFromHigh.toFixed(1)}% away)`,
+    isSimulated: false,
   };
 }
 
@@ -167,6 +188,7 @@ function scoreCatalysts(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Catalyst present (${count})`
           : "No catalysts detected",
+    isSimulated: false,
   };
 }
 
@@ -200,6 +222,7 @@ function scoreSocialBuzz(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate buzz: ${buzzScore}/100 [SIMULATED]`
           : `Low buzz: ${buzzScore}/100 [SIMULATED]`,
+    isSimulated: true,
   };
 }
 
@@ -233,6 +256,7 @@ function scorePriceStability(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate: ${spread.toFixed(1)}% spread`
           : `Volatile: ${spread.toFixed(1)}% spread`,
+    isSimulated: false,
   };
 }
 
@@ -268,6 +292,7 @@ function scoreTradingValue(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate trading value: ${formatted}`
           : `Low trading value: ${formatted}`,
+    isSimulated: false,
   };
 }
 
@@ -276,6 +301,8 @@ function scoreTradingValue(data: TickerData): ScoreCriterion {
  * C9: Intraday range vs previous close
  */
 function scoreIntradayRange(data: TickerData): ScoreCriterion {
+  // #11: Division by zero 방지
+  // #11: Division by zero guard
   const range =
     data.prevClose > 0
       ? ((data.dayHigh - data.dayLow) / data.prevClose) * 100
@@ -299,39 +326,45 @@ function scoreIntradayRange(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate range: ${range.toFixed(1)}% of prev close`
           : `Narrow range: ${range.toFixed(1)}% of prev close`,
+    isSimulated: false,
   };
 }
 
 /**
- * C10: 52주 최고가 근접도 (화제 종목용)
- * C10: 52-week high proximity (trending)
+ * C10: 거래대금 대비 가격 변동 효율성 (C4/C10 중복 제거)
+ * C10: Trading value efficiency — price change per dollar of volume
  */
-function score52WeekHighProximity(data: TickerData): ScoreCriterion {
-  const distanceFromHigh =
-    data.fiftyTwoWeekHigh > 0
-      ? ((data.fiftyTwoWeekHigh - data.preMarketPrice) / data.fiftyTwoWeekHigh) * 100
-      : 100;
+function scoreTradingValueEfficiency(data: TickerData): ScoreCriterion {
+  const tradingValue = data.preMarketPrice * data.preMarketVolume;
+  // 거래대금(백만달러) 대비 가격 변동률의 절대값
+  // Absolute price change percent per million dollars of trading value
+  const tradingValueInMillions = tradingValue / 1_000_000;
+  const efficiency = tradingValueInMillions > 0
+    ? Math.abs(data.preMarketChangePercent) / tradingValueInMillions
+    : 0;
+
   let score = 0;
 
-  // 10% 이내면 2점, 10-30% 이내면 1점
-  // Within 10% → 2pts, 10-30% → 1pt
-  if (distanceFromHigh <= 10) {
+  // 높은 효율성 = 적은 거래대금으로 큰 가격 변동
+  // High efficiency = large price move with small trading value
+  if (efficiency >= TRADING_EFFICIENCY_HIGH) {
     score = 2;
-  } else if (distanceFromHigh <= 30) {
+  } else if (efficiency >= TRADING_EFFICIENCY_MODERATE) {
     score = 1;
   }
 
   return {
-    key: "weekHighProximity",
-    name: "52W High Proximity",
+    key: "tradingValueEfficiency",
+    name: "Trading Value Efficiency",
     score,
     maxScore: MAX_SCORE_PER_CRITERION,
     description:
       score === 2
-        ? `Near 52W high (${distanceFromHigh.toFixed(1)}% away)`
+        ? `High efficiency: ${efficiency.toFixed(2)}%/$M`
         : score === 1
-          ? `Approaching 52W high (${distanceFromHigh.toFixed(1)}% away)`
-          : `Far from 52W high (${distanceFromHigh.toFixed(1)}% away)`,
+          ? `Moderate efficiency: ${efficiency.toFixed(2)}%/$M`
+          : `Low efficiency: ${efficiency.toFixed(2)}%/$M`,
+    isSimulated: false,
   };
 }
 
@@ -370,6 +403,7 @@ function scoreMarketCapCategory(data: TickerData): ScoreCriterion {
     maxScore: MAX_SCORE_PER_CRITERION,
     description:
       `${label} [SIMULATED]`,
+    isSimulated: true,
   };
 }
 
@@ -407,6 +441,7 @@ function scoreConsecutiveUpDays(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Short streak: ${consecutiveDays} days [SIMULATED]`
           : `No streak: ${consecutiveDays} days [SIMULATED]`,
+    isSimulated: true,
   };
 }
 
@@ -425,7 +460,7 @@ export function calculateScore(data: TickerData): ScoringResult {
     scorePriceStability(data),
     scoreTradingValue(data),
     scoreIntradayRange(data),
-    score52WeekHighProximity(data),
+    scoreTradingValueEfficiency(data),
     scoreMarketCapCategory(data),
     scoreConsecutiveUpDays(data),
   ];

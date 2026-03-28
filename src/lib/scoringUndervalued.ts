@@ -48,6 +48,7 @@ function scoreVolumeRatio(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Above average: ${ratio.toFixed(1)}x`
           : `Low volume: ${ratio.toFixed(1)}x average`,
+    isSimulated: false,
   };
 }
 
@@ -56,10 +57,21 @@ function scoreVolumeRatio(data: TickerData): ScoreCriterion {
  * C2: 52-week low proximity (closer = higher score)
  */
 function score52WeekLowProximity(data: TickerData): ScoreCriterion {
+  // #5: 52주 데이터 없으면 0점
+  // #5: 0 points when 52-week data is missing
+  if (!data.has52WeekData || data.fiftyTwoWeekLow === null || data.fiftyTwoWeekLow <= 0) {
+    return {
+      key: "weekLowProximity",
+      name: "52W Low Proximity",
+      score: 0,
+      maxScore: MAX_SCORE_PER_CRITERION,
+      description: "52-week data unavailable",
+      isSimulated: false,
+    };
+  }
+
   const distanceFromLow =
-    data.fiftyTwoWeekLow > 0
-      ? ((data.preMarketPrice - data.fiftyTwoWeekLow) / data.fiftyTwoWeekLow) * 100
-      : 100;
+    ((data.preMarketPrice - data.fiftyTwoWeekLow) / data.fiftyTwoWeekLow) * 100;
 
   let score = 0;
 
@@ -82,6 +94,7 @@ function score52WeekLowProximity(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Close to 52W low (+${distanceFromLow.toFixed(1)}% from low)`
           : `Far from 52W low (+${distanceFromLow.toFixed(1)}% from low)`,
+    isSimulated: false,
   };
 }
 
@@ -112,6 +125,7 @@ function scorePriceTrend(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Mild recovery: +${changePercent.toFixed(2)}%`
           : `Weak/negative trend: ${changePercent >= 0 ? "+" : ""}${changePercent.toFixed(2)}%`,
+    isSimulated: false,
   };
 }
 
@@ -146,6 +160,7 @@ function scorePriceRecovery(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate recovery: +${recoveryPercent.toFixed(1)}%`
           : `Minimal recovery: +${recoveryPercent.toFixed(1)}%`,
+    isSimulated: false,
   };
 }
 
@@ -179,6 +194,7 @@ function scoreSectorSentiment(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate: ${spread.toFixed(1)}% spread`
           : `Volatile: ${spread.toFixed(1)}% spread`,
+    isSimulated: false,
   };
 }
 
@@ -187,10 +203,21 @@ function scoreSectorSentiment(data: TickerData): ScoreCriterion {
  * C6: Gap from 52-week high (larger gap = more undervalued)
  */
 function score52WeekHighGap(data: TickerData): ScoreCriterion {
+  // #5: 52주 데이터 없으면 0점
+  // #5: 0 points when 52-week data is missing
+  if (!data.has52WeekData || data.fiftyTwoWeekHigh === null || data.fiftyTwoWeekHigh <= 0) {
+    return {
+      key: "weekHighGap",
+      name: "52W High Gap",
+      score: 0,
+      maxScore: MAX_SCORE_PER_CRITERION,
+      description: "52-week data unavailable",
+      isSimulated: false,
+    };
+  }
+
   const gapFromHigh =
-    data.fiftyTwoWeekHigh > 0
-      ? ((data.fiftyTwoWeekHigh - data.preMarketPrice) / data.fiftyTwoWeekHigh) * 100
-      : 0;
+    ((data.fiftyTwoWeekHigh - data.preMarketPrice) / data.fiftyTwoWeekHigh) * 100;
 
   let score = 0;
 
@@ -213,6 +240,7 @@ function score52WeekHighGap(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate gap: ${gapFromHigh.toFixed(1)}% below`
           : `Near high: ${gapFromHigh.toFixed(1)}% below`,
+    isSimulated: false,
   };
 }
 
@@ -225,7 +253,7 @@ function scoreInstitutionalVolume(data: TickerData): ScoreCriterion {
   // High volume + low price = potential institutional accumulation
   const ratio = data.volumeRatio;
   const nearLow =
-    data.fiftyTwoWeekLow > 0
+    data.fiftyTwoWeekLow !== null && data.fiftyTwoWeekLow > 0
       ? ((data.preMarketPrice - data.fiftyTwoWeekLow) / data.fiftyTwoWeekLow) * 100
       : 100;
 
@@ -250,6 +278,7 @@ function scoreInstitutionalVolume(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate volume interest (${ratio.toFixed(1)}x vol)`
           : `Low institutional signal (${ratio.toFixed(1)}x vol)`,
+    isSimulated: false,
   };
 }
 
@@ -288,6 +317,7 @@ function scoreTradingValueVsMarketCap(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate accumulation: ${ratio.toFixed(2)}% [SIMULATED]`
           : `Low accumulation: ${ratio.toFixed(2)}% [SIMULATED]`,
+    isSimulated: true,
   };
 }
 
@@ -321,6 +351,7 @@ function scorePriceStabilityUV(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderately stable: ${range.toFixed(1)}% range`
           : `Unstable: ${range.toFixed(1)}% range`,
+    isSimulated: false,
   };
 }
 
@@ -329,10 +360,23 @@ function scorePriceStabilityUV(data: TickerData): ScoreCriterion {
  * C10: Support level proximity (near midpoint of 52W low and day low)
  */
 function scoreSupportLevelProximity(data: TickerData): ScoreCriterion {
+  // #5: 52주 데이터 없으면 0점
+  // #5: 0 points when 52-week data is missing
+  if (data.fiftyTwoWeekLow === null || data.fiftyTwoWeekLow <= 0) {
+    return {
+      key: "supportLevelProximity",
+      name: "Support Level Proximity",
+      score: 0,
+      maxScore: MAX_SCORE_PER_CRITERION,
+      description: "52-week data unavailable",
+      isSimulated: false,
+    };
+  }
+
   // 지지선을 52주 최저가와 당일 저가의 중간값으로 추정
   // Estimate support level as midpoint of 52W low and day low
   const supportLevel =
-    data.fiftyTwoWeekLow > 0 && data.dayLow > 0
+    data.dayLow > 0
       ? (data.fiftyTwoWeekLow + data.dayLow) / 2
       : 0;
 
@@ -362,6 +406,7 @@ function scoreSupportLevelProximity(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Close to support: +${distance.toFixed(1)}% above`
           : `Far from support: +${distance.toFixed(1)}% above`,
+    isSimulated: false,
   };
 }
 
@@ -400,6 +445,7 @@ function scoreVolumeTrend(data: TickerData): ScoreCriterion {
     maxScore: MAX_SCORE_PER_CRITERION,
     description:
       `${label} volume trend [SIMULATED]`,
+    isSimulated: true,
   };
 }
 
@@ -408,10 +454,21 @@ function scoreVolumeTrend(data: TickerData): ScoreCriterion {
  * C12: Bounce strength (recovery from 52-week low)
  */
 function scoreBounceStrength(data: TickerData): ScoreCriterion {
+  // #5: 52주 데이터 없으면 0점
+  // #5: 0 points when 52-week data is missing
+  if (data.fiftyTwoWeekLow === null || data.fiftyTwoWeekLow <= 0) {
+    return {
+      key: "bounceStrength",
+      name: "Bounce Strength",
+      score: 0,
+      maxScore: MAX_SCORE_PER_CRITERION,
+      description: "52-week data unavailable",
+      isSimulated: false,
+    };
+  }
+
   const bouncePercent =
-    data.fiftyTwoWeekLow > 0
-      ? ((data.preMarketPrice - data.fiftyTwoWeekLow) / data.fiftyTwoWeekLow) * 100
-      : 0;
+    ((data.preMarketPrice - data.fiftyTwoWeekLow) / data.fiftyTwoWeekLow) * 100;
 
   let score = 0;
 
@@ -432,6 +489,7 @@ function scoreBounceStrength(data: TickerData): ScoreCriterion {
         : score === 1
           ? `Moderate bounce: +${bouncePercent.toFixed(1)}% from 52W low`
           : `Weak bounce: +${bouncePercent.toFixed(1)}% from 52W low`,
+    isSimulated: false,
   };
 }
 

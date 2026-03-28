@@ -13,7 +13,7 @@ export type CriterionKey =
   | "socialBuzz"
   | "tradingValue"
   | "intradayRange"
-  | "weekHighProximity"
+  | "tradingValueEfficiency"
   | "marketCapCategory"
   | "consecutiveUpDays";
 
@@ -44,6 +44,8 @@ export interface ScoreCriterion {
   score: number;
   maxScore: number;
   description: string;
+  /** 시뮬레이션 데이터 여부 / Whether this criterion uses simulated data */
+  isSimulated: boolean;
 }
 
 /** 스코어링 결과 / Scoring result */
@@ -67,8 +69,10 @@ export interface TickerData {
   volumeRatio: number;
   dayHigh: number;
   dayLow: number;
-  fiftyTwoWeekHigh: number;
-  fiftyTwoWeekLow: number;
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  /** 52주 데이터 보유 여부 / Whether 52-week data is available */
+  has52WeekData: boolean;
   catalysts: string[];
   isLive: boolean;
 }
