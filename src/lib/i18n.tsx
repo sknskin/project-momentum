@@ -80,7 +80,7 @@ interface Translations {
   criteriaSocialBuzz: string;
   criteriaTradingValue: string;
   criteriaIntradayRange: string;
-  criteriaWeekHighProximity: string;
+  criteriaTradingValueEfficiency: string;
   criteriaMarketCapCategory: string;
   criteriaConsecutiveUpDays: string;
   // 스코어 기준 이름 (저평가 종목 탭)
@@ -128,6 +128,28 @@ interface Translations {
   undervalueScore: string;
   // 트렌딩 안내 / Trending notice
   trendingNotice: string;
+  // 정렬 / Sorting
+  sortByScore: string;
+  sortByChange: string;
+  sortByVolume: string;
+  sortByTradingValue: string;
+  // 검색 / Search
+  searchPlaceholder: string;
+  searchButton: string;
+  // 시뮬레이션 배지 / Simulation badge
+  simulatedBadge: string;
+  // 세션 라벨 (카드용) / Session labels (for card)
+  sessionPreMarket: string;
+  sessionMarketOpen: string;
+  sessionAfterHours: string;
+  sessionClosed: string;
+  // 카드 외 N개 기준 / Card remaining criteria
+  andMoreCriteria: (n: number) => string;
+  // 에러 배너 / Error banner
+  errorBanner: string;
+  // 알림 모달 / Alert modal
+  alertConfirm: string;
+  alertCancel: string;
 }
 
 /** 한국어 번역 / Korean translations */
@@ -180,7 +202,7 @@ const ko: Translations = {
   criteriaSocialBuzz: "소셜 버즈",
   criteriaTradingValue: "거래대금",
   criteriaIntradayRange: "전일 대비 변동 폭",
-  criteriaWeekHighProximity: "52주 최고가 근접도",
+  criteriaTradingValueEfficiency: "거래대금 대비 가격 변동",
   criteriaMarketCapCategory: "시가총액 규모",
   criteriaConsecutiveUpDays: "연속 상승일",
   criteriaVolumeRatio: "거래량 비율",
@@ -223,6 +245,21 @@ const ko: Translations = {
   tabTrending: "SNS 화제 종목",
   undervalueScore: "저평가 점수",
   trendingNotice: "Yahoo Finance 트렌딩 기반",
+  sortByScore: "점수순",
+  sortByChange: "변동률순",
+  sortByVolume: "거래량순",
+  sortByTradingValue: "거래대금순",
+  searchPlaceholder: "종목 검색 (예: TSLA)",
+  searchButton: "검색",
+  simulatedBadge: "시뮬레이션",
+  sessionPreMarket: "프리마켓",
+  sessionMarketOpen: "정규장",
+  sessionAfterHours: "시간외",
+  sessionClosed: "장 마감",
+  andMoreCriteria: (n: number) => `외 ${n}개 기준`,
+  errorBanner: "데이터 갱신에 실패했습니다. 이전 데이터를 표시합니다.",
+  alertConfirm: "확인",
+  alertCancel: "취소",
 };
 
 /** 영어 번역 / English translations */
@@ -274,7 +311,7 @@ const en: Translations = {
   criteriaSocialBuzz: "Social Buzz",
   criteriaTradingValue: "Trading Value",
   criteriaIntradayRange: "Intraday Range",
-  criteriaWeekHighProximity: "52W High Proximity",
+  criteriaTradingValueEfficiency: "Trading Value Efficiency",
   criteriaMarketCapCategory: "Market Cap Category",
   criteriaConsecutiveUpDays: "Consecutive Up Days",
   criteriaVolumeRatio: "Volume Ratio",
@@ -317,6 +354,21 @@ const en: Translations = {
   tabTrending: "SNS Trending",
   undervalueScore: "Undervalue Score",
   trendingNotice: "Based on Yahoo Finance trending data",
+  sortByScore: "By Score",
+  sortByChange: "By Change %",
+  sortByVolume: "By Volume",
+  sortByTradingValue: "By Trading Value",
+  searchPlaceholder: "Search ticker (e.g. TSLA)",
+  searchButton: "Search",
+  simulatedBadge: "Simulated",
+  sessionPreMarket: "PRE-MKT",
+  sessionMarketOpen: "REGULAR",
+  sessionAfterHours: "AFTER-HRS",
+  sessionClosed: "CLOSED",
+  andMoreCriteria: (n: number) => `+${n} more criteria`,
+  errorBanner: "Failed to refresh data. Showing previous results.",
+  alertConfirm: "OK",
+  alertCancel: "Cancel",
 };
 
 /** 번역 사전 맵 / Translation dictionary map */

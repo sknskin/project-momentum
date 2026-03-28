@@ -26,7 +26,7 @@ function getTranslatedName(
     criteriaSocialBuzz: string;
     criteriaTradingValue: string;
     criteriaIntradayRange: string;
-    criteriaWeekHighProximity: string;
+    criteriaTradingValueEfficiency: string;
     criteriaMarketCapCategory: string;
     criteriaConsecutiveUpDays: string;
     criteriaVolumeRatio: string;
@@ -54,7 +54,7 @@ function getTranslatedName(
     socialBuzz: t.criteriaSocialBuzz,
     tradingValue: t.criteriaTradingValue,
     intradayRange: t.criteriaIntradayRange,
-    weekHighProximity: t.criteriaWeekHighProximity,
+    tradingValueEfficiency: t.criteriaTradingValueEfficiency,
     marketCapCategory: t.criteriaMarketCapCategory,
     consecutiveUpDays: t.criteriaConsecutiveUpDays,
     // 저평가 종목 기준 / Undervalued criteria
@@ -104,8 +104,20 @@ export default function ScoreCriteriaBar({ criterion }: ScoreCriteriaBarProps) {
       {/* 라벨 및 점수 표시 */}
       {/* Label and score display */}
       <div className="flex justify-between items-center mb-1">
-        <span className="text-xs" style={{ color: "var(--m-text)" }}>
+        <span className="text-xs flex items-center gap-1" style={{ color: "var(--m-text)" }}>
           {translatedName}
+          {/* #2: 시뮬레이션 배지 / Simulated badge */}
+          {criterion.isSimulated && (
+            <span
+              className="px-1 py-0.5 text-[8px] rounded font-medium"
+              style={{
+                background: "color-mix(in srgb, var(--m-moderate-color) 15%, transparent)",
+                color: "var(--m-text-muted)",
+              }}
+            >
+              {t.simulatedBadge}
+            </span>
+          )}
         </span>
         <span
           className="text-xs font-bold"
@@ -115,11 +127,16 @@ export default function ScoreCriteriaBar({ criterion }: ScoreCriteriaBarProps) {
         </span>
       </div>
 
-      {/* 프로그레스 바 */}
-      {/* Progress bar */}
+      {/* 프로그레스 바 / Progress bar */}
+      {/* #16: 접근성 속성 추가 / Accessibility attributes added */}
       <div
         className="w-full h-2 rounded-full overflow-hidden"
         style={{ background: "var(--m-bar-bg)" }}
+        role="progressbar"
+        aria-valuenow={criterion.score}
+        aria-valuemin={0}
+        aria-valuemax={criterion.maxScore}
+        aria-label={`${translatedName}: ${criterion.score}/${criterion.maxScore}`}
       >
         <div
           className="h-full rounded-full transition-all duration-500 ease-out"
