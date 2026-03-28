@@ -253,13 +253,11 @@ export default function StockDetailModal({
     [onClose]
   );
 
-  // 52주 범위 내 현재가 위치
-  // Current price position within 52-week range
-  const weekPosition = calculate52WeekPosition(
-    data.preMarketPrice,
-    data.fiftyTwoWeekLow,
-    data.fiftyTwoWeekHigh
-  );
+  // 52주 범위 내 현재가 위치 (null 데이터 처리)
+  // Current price position within 52-week range (handle null data)
+  const weekPosition = (data.fiftyTwoWeekLow !== null && data.fiftyTwoWeekHigh !== null)
+    ? calculate52WeekPosition(data.preMarketPrice, data.fiftyTwoWeekLow, data.fiftyTwoWeekHigh)
+    : 0;
 
   return (
     <div
@@ -397,45 +395,55 @@ export default function StockDetailModal({
               </div>
             </div>
 
-            {/* 52주 범위 바 / 52-week range bar */}
-            <div className="mt-3">
-              <div className="flex justify-between text-[10px] mb-1">
-                <span style={{ color: "var(--m-text-muted)" }}>
-                  {t.modal52WeekLow}: ${data.fiftyTwoWeekLow.toFixed(2)}
-                </span>
-                <span style={{ color: "var(--m-text-muted)" }}>
-                  {t.modal52WeekHigh}: ${data.fiftyTwoWeekHigh.toFixed(2)}
-                </span>
-              </div>
-              <div
-                className="relative w-full h-3 rounded-full overflow-hidden"
-                style={{ background: "var(--m-bar-bg)" }}
-              >
-                {/* 현재가 위치 마커 / Current price position marker */}
+            {/* 52주 범위 바 (데이터 있을 때만 표시) / 52-week range bar (only when data available) */}
+            {data.has52WeekData && data.fiftyTwoWeekLow !== null && data.fiftyTwoWeekHigh !== null && (
+              <div className="mt-3">
+                <div className="flex justify-between text-[10px] mb-1">
+                  <span style={{ color: "var(--m-text-muted)" }}>
+                    {t.modal52WeekLow}: ${data.fiftyTwoWeekLow.toFixed(2)}
+                  </span>
+                  <span style={{ color: "var(--m-text-muted)" }}>
+                    {t.modal52WeekHigh}: ${data.fiftyTwoWeekHigh.toFixed(2)}
+                  </span>
+                </div>
                 <div
-                  className="absolute top-0 h-full w-1 rounded-full"
-                  style={{
-                    left: `${weekPosition}%`,
-                    background: "var(--m-accent)",
-                    transform: "translateX(-50%)",
-                  }}
-                />
-                {/* 범위 채움 / Range fill */}
+                  className="relative w-full h-3 rounded-full overflow-hidden"
+                  style={{ background: "var(--m-bar-bg)" }}
+                >
+                  {/* 현재가 위치 마커 / Current price position marker */}
+                  <div
+                    className="absolute top-0 h-full w-1 rounded-full"
+                    style={{
+                      left: `${weekPosition}%`,
+                      background: "var(--m-accent)",
+                      transform: "translateX(-50%)",
+                    }}
+                  />
+                  {/* 범위 채움 / Range fill */}
+                  <div
+                    className="h-full rounded-full transition-all duration-500 ease-out"
+                    style={{
+                      width: `${weekPosition}%`,
+                      background: "color-mix(in srgb, var(--m-accent) 30%, transparent)",
+                    }}
+                  />
+                </div>
                 <div
-                  className="h-full rounded-full transition-all duration-500 ease-out"
-                  style={{
-                    width: `${weekPosition}%`,
-                    background: "color-mix(in srgb, var(--m-accent) 30%, transparent)",
-                  }}
-                />
+                  className="text-center text-[10px] mt-1"
+                  style={{ color: "var(--m-accent)" }}
+                >
+                  {weekPosition.toFixed(0)}%
+                </div>
               </div>
-              <div
-                className="text-center text-[10px] mt-1"
-                style={{ color: "var(--m-accent)" }}
-              >
-                {weekPosition.toFixed(0)}%
+            )}
+            {/* 52주 데이터 없음 안내 / No 52-week data notice */}
+            {!data.has52WeekData && (
+              <div className="mt-3 text-center">
+                <p className="text-[10px]" style={{ color: "var(--m-text-muted)" }}>
+                  52-week data unavailable
+                </p>
               </div>
-            </div>
+            )}
           </section>
 
           {/* ===== 스코어 상세 섹션 ===== */}
