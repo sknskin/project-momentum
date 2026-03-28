@@ -3,12 +3,14 @@
 // 메인 스캐너 UI 페이지 — 저평가 종목 / SNS 화제 종목 탭 구성
 // Main scanner UI page — Undervalued / SNS Trending tabs
 
-import { Suspense, useState, useCallback, useEffect, useRef } from "react";
+import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { TickerData, ScreenerApiResponse } from "@/lib/types";
+import { TickerData, ScreenerApiResponse, StockApiResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { useTheme } from "@/lib/ThemeContext";
 import TickerCard from "@/components/TickerCard";
+import TickerCardSkeleton from "@/components/TickerCardSkeleton";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import StockDetailModal from "@/components/StockDetailModal";
 import MarketSessionBadge from "@/components/MarketSessionBadge";
 import RefreshCountdown from "@/components/RefreshCountdown";
@@ -17,6 +19,9 @@ import { calculateUndervaluedScore, generateUndervaluedEntryStrategy } from "@/l
 
 /** 탭 타입 / Tab type */
 type TabType = "undervalued" | "trending";
+
+/** 정렬 키 타입 / Sort key type */
+type SortKey = "score" | "change" | "volume" | "tradingValue";
 
 /** 유효한 탭 값 상수 / Valid tab value constants */
 const VALID_TABS: TabType[] = ["undervalued", "trending"];
@@ -27,6 +32,9 @@ const TAB_API_MAP: Record<TabType, string> = {
   undervalued: "/api/screener/undervalued",
   trending: "/api/screener/trending",
 };
+
+/** 스켈레톤 카드 수 / Number of skeleton cards */
+const SKELETON_COUNT = 6;
 
 /**
  * 페이지 래퍼 — useSearchParams를 위한 Suspense 경계 제공
@@ -78,6 +86,19 @@ function HomePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [undervaluedSource, setUndervaluedSource] = useState<string | null>(null);
   const [trendingSource, setTrendingSource] = useState<string | null>(null);
+
+  // #15: 에러 배너 상태 (이전 데이터를 유지하면서 에러 표시)
+  // #15: Error banner state (show error while keeping previous data)
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+
+  // #6: 정렬 키 상태
+  // #6: Sort key state
+  const [sortKey, setSortKey] = useState<SortKey>("score");
+
+  // #7: 검색 입력 상태
+  // #7: Search input state
+  const [searchInput, setSearchInput] = useState("");
+  const [searching, setSearching] = useState(false);
 
   // 선택된 종목 (모달 표시용)
   // Selected ticker (for modal display)
@@ -133,10 +154,12 @@ function HomePageContent() {
     async (tab: TabType): Promise<void> => {
       setLoading(true);
       setError(null);
+      setErrorBanner(null);
 
       const apiPath = TAB_API_MAP[tab];
       const setTickers = tab === "undervalued" ? setUndervaluedTickers : setTrendingTickers;
       const setSource = tab === "undervalued" ? setUndervaluedSource : setTrendingSource;
+      const currentTickers = tab === "undervalued" ? undervaluedTickers : trendingTickers;
 
       try {
         const response = await fetch(apiPath);
@@ -145,9 +168,14 @@ function HomePageContent() {
         if (!response.ok || !data.success) {
           const errorMsg =
             "error" in data ? data.error : t.cannotFetchHotStocks;
-          setError(errorMsg);
-          setTickers([]);
-          setSource(null);
+
+          // #15: 이전 데이터가 있으면 배너로 에러 표시, 데이터 유지
+          // #15: If previous data exists, show error as banner and keep data
+          if (currentTickers.length > 0) {
+            setErrorBanner(errorMsg);
+          } else {
+            setError(errorMsg);
+          }
           return;
         }
 
@@ -155,14 +183,20 @@ function HomePageContent() {
         setSource(data.source);
       } catch (err) {
         console.error(`[fetchTabData:${tab}] Unexpected error:`, err);
-        setError(t.cannotFetchHotStocks);
-        setTickers([]);
-        setSource(null);
+        const errorMsg = t.cannotFetchHotStocks;
+
+        // #15: 이전 데이터가 있으면 배너로 에러 표시
+        // #15: If previous data exists, show error as banner
+        if (currentTickers.length > 0) {
+          setErrorBanner(errorMsg);
+        } else {
+          setError(errorMsg);
+        }
       } finally {
         setLoading(false);
       }
     },
-    [t.cannotFetchHotStocks]
+    [t.cannotFetchHotStocks, undervaluedTickers, trendingTickers]
   );
 
   // 탭 변경 시 데이터 미로드 상태이면 자동 fetch
@@ -190,9 +224,79 @@ function HomePageContent() {
     fetchTabData(activeTab);
   }, [activeTab, fetchTabData]);
 
+  /**
+   * #7: 수동 검색 핸들러
+   * #7: Manual search handler
+   */
+  const handleSearch = useCallback(async () => {
+    const symbol = searchInput.trim().toUpperCase();
+    if (!symbol) return;
+
+    setSearching(true);
+    try {
+      const response = await fetch(`/api/stock/${symbol}`);
+      const data = (await response.json()) as StockApiResponse;
+
+      if (data.success && data.data) {
+        // 현재 활성 탭의 세터를 사용하여 결과를 맨 위에 추가
+        // Add result to top of current active tab
+        const setTickers = activeTab === "undervalued" ? setUndervaluedTickers : setTrendingTickers;
+        setTickers((prev) => {
+          // 이미 있는 종목이면 중복 추가하지 않음
+          // Skip if already in list
+          const exists = prev.some((t) => t.symbol === data.data.symbol);
+          if (exists) return prev;
+          return [data.data, ...prev];
+        });
+        setSearchInput("");
+      } else {
+        const errorMsg = data.error ?? `${symbol} 데이터를 가져올 수 없습니다`;
+        setErrorBanner(errorMsg);
+      }
+    } catch (err) {
+      console.error("[handleSearch] Unexpected error:", err);
+      setErrorBanner(t.cannotFetchHotStocks);
+    } finally {
+      setSearching(false);
+    }
+  }, [searchInput, activeTab, t.cannotFetchHotStocks]);
+
   // 현재 탭의 데이터
   // Current tab data
   const { tickers, source } = getActiveTabState();
+
+  // #6: 정렬된 티커 목록 (useMemo)
+  // #6: Sorted tickers list (useMemo)
+  const sortedTickers = useMemo(() => {
+    if (tickers.length === 0) return tickers;
+
+    const sorted = [...tickers];
+    switch (sortKey) {
+      case "score":
+        sorted.sort((a, b) => {
+          const scoreA = activeTab === "undervalued"
+            ? calculateUndervaluedScore(a).total
+            : calculateScore(a).total;
+          const scoreB = activeTab === "undervalued"
+            ? calculateUndervaluedScore(b).total
+            : calculateScore(b).total;
+          return scoreB - scoreA;
+        });
+        break;
+      case "change":
+        sorted.sort((a, b) => Math.abs(b.preMarketChangePercent) - Math.abs(a.preMarketChangePercent));
+        break;
+      case "volume":
+        sorted.sort((a, b) => b.preMarketVolume - a.preMarketVolume);
+        break;
+      case "tradingValue":
+        sorted.sort((a, b) =>
+          (b.preMarketPrice * b.preMarketVolume) - (a.preMarketPrice * a.preMarketVolume)
+        );
+        break;
+    }
+    return sorted;
+  }, [tickers, sortKey, activeTab]);
 
   return (
     <div
@@ -309,6 +413,23 @@ function HomePageContent() {
               {loading ? t.scanning : t.scanNow}
             </button>
 
+            {/* #6: 정렬 드롭다운 / Sort dropdown */}
+            <select
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
+              className="px-3 py-2 text-xs font-bold rounded-lg border cursor-pointer"
+              style={{
+                background: "var(--m-card)",
+                borderColor: "var(--m-border)",
+                color: "var(--m-text)",
+              }}
+            >
+              <option value="score">{t.sortByScore}</option>
+              <option value="change">{t.sortByChange}</option>
+              <option value="volume">{t.sortByVolume}</option>
+              <option value="tradingValue">{t.sortByTradingValue}</option>
+            </select>
+
             {/* 데이터 소스 배지 / Data source badge */}
             {source && !loading && (
               <span
@@ -331,9 +452,42 @@ function HomePageContent() {
             )}
           </div>
 
-          {/* 탭별 안내 문구 / Per-tab notice */}
+          {/* #7: 수동 종목 검색 / Manual ticker search */}
+          <div className="flex items-center gap-2 mt-3">
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
+              placeholder={t.searchPlaceholder}
+              className="flex-1 max-w-xs px-3 py-2 text-sm rounded-lg border"
+              style={{
+                background: "var(--m-card)",
+                borderColor: "var(--m-border)",
+                color: "var(--m-text)",
+              }}
+              disabled={searching}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={searching || !searchInput.trim()}
+              className="px-4 py-2 text-sm font-bold rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              style={{
+                background: "var(--m-card)",
+                borderColor: "var(--m-accent)",
+                color: "var(--m-accent)",
+              }}
+            >
+              {searching ? "..." : t.searchButton}
+            </button>
+          </div>
+
+          {/* #13: 탭별 안내 문구 (수정: 이전에 뒤바뀌어 있었음) */}
+          {/* #13: Per-tab notice (fix: was previously swapped) */}
           <p className="mt-2 text-[10px]" style={{ color: "var(--m-moderate-color)" }}>
-            {activeTab === "trending" ? t.socialBuzzNotice : t.trendingNotice}
+            {activeTab === "trending" ? t.trendingNotice : t.socialBuzzNotice}
           </p>
         </div>
       </header>
@@ -341,23 +495,42 @@ function HomePageContent() {
       {/* 메인 콘텐츠: 종목 카드 그리드 */}
       {/* Main content: Ticker card grid */}
       <main className="flex-1 max-w-6xl mx-auto px-4 py-6 w-full">
-        {/* 로딩 상태 / Loading state */}
-        {loading && tickers.length === 0 && (
-          <div className="flex items-center justify-center py-20">
-            <div className="flex flex-col items-center gap-4">
-              <div
-                className="w-10 h-10 border-3 border-t-transparent rounded-full animate-spin"
-                style={{ borderColor: "var(--m-accent)", borderTopColor: "transparent" }}
-              />
-              <p className="text-sm" style={{ color: "var(--m-text-muted)" }}>
-                {t.scanningMarket}
-              </p>
-            </div>
+        {/* #15: 에러 배너 (이전 데이터 위에 표시) */}
+        {/* #15: Error banner (shown above existing results) */}
+        {errorBanner && (
+          <div
+            className="mb-4 p-3 rounded-lg border flex items-center justify-between"
+            style={{
+              background: "color-mix(in srgb, var(--m-moderate-color) 10%, transparent)",
+              borderColor: "color-mix(in srgb, var(--m-moderate-color) 30%, transparent)",
+            }}
+          >
+            <p className="text-xs" style={{ color: "var(--m-moderate-color)" }}>
+              {errorBanner}
+            </p>
+            <button
+              onClick={() => setErrorBanner(null)}
+              className="text-xs font-bold ml-3 cursor-pointer"
+              style={{ color: "var(--m-text-muted)" }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
-        {/* 에러 상태 / Error state */}
-        {error && !loading && (
+        {/* #14: 스켈레톤 로딩 UI (초기 로드 시) */}
+        {/* #14: Skeleton loading UI (during initial load) */}
+        {loading && tickers.length === 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+              <TickerCardSkeleton key={i} />
+            ))}
+          </div>
+        )}
+
+        {/* 에러 상태 (데이터가 없는 경우만) */}
+        {/* Error state (only when no data) */}
+        {error && !loading && tickers.length === 0 && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center max-w-md">
               <p className="text-4xl mb-4">⚠️</p>
@@ -399,15 +572,16 @@ function HomePageContent() {
 
         {/* 종목 카드 그리드 (데스크톱 2열, 모바일 1열) */}
         {/* Ticker card grid (2-col desktop, 1-col mobile) */}
-        {tickers.length > 0 && (
+        {sortedTickers.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {tickers.map((ticker) => (
-              <TickerCard
-                key={ticker.symbol}
-                data={ticker}
-                scoringMode={activeTab === "undervalued" ? "undervalued" : "trending"}
-                onClick={setSelectedTicker}
-              />
+            {sortedTickers.map((ticker) => (
+              <ErrorBoundary key={ticker.symbol}>
+                <TickerCard
+                  data={ticker}
+                  scoringMode={activeTab === "undervalued" ? "undervalued" : "trending"}
+                  onClick={setSelectedTicker}
+                />
+              </ErrorBoundary>
             ))}
           </div>
         )}
