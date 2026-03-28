@@ -1,26 +1,156 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ═══════════════════════════════════════
+   테마 전환 — 블러 크로스 디졸브 (View Transition API)
+   Theme transition — blur cross-dissolve (View Transition API)
+   ═══════════════════════════════════════ */
+::view-transition-old(root) {
+  z-index: 1;
+  will-change: opacity, filter;
+  animation: theme-out 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+::view-transition-new(root) {
+  z-index: 2;
+  will-change: opacity, filter;
+  animation: theme-in 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* 이전 뷰 — 단조 감소 (opacity, blur, saturate)
+   Old view — monotonic decrease (opacity, blur, saturate) */
+@keyframes theme-out {
+  0%   { opacity: 1;    filter: blur(0px)    saturate(1);    }
+  10%  { opacity: 0.93; filter: blur(0.8px)  saturate(0.88); }
+  20%  { opacity: 0.83; filter: blur(2px)    saturate(0.74); }
+  30%  { opacity: 0.71; filter: blur(3.5px)  saturate(0.6);  }
+  40%  { opacity: 0.57; filter: blur(5px)    saturate(0.46); }
+  50%  { opacity: 0.43; filter: blur(6.5px)  saturate(0.34); }
+  60%  { opacity: 0.3;  filter: blur(8px)    saturate(0.24); }
+  70%  { opacity: 0.18; filter: blur(9px)    saturate(0.15); }
+  80%  { opacity: 0.09; filter: blur(10px)   saturate(0.08); }
+  90%  { opacity: 0.03; filter: blur(11px)   saturate(0.02); }
+  100% { opacity: 0;    filter: blur(12px)   saturate(0);    }
+}
+
+/* 새 뷰 — 단조 증가
+   New view — monotonic increase */
+@keyframes theme-in {
+  0%   { opacity: 0;    filter: blur(12px)   saturate(0);    }
+  10%  { opacity: 0.07; filter: blur(10.5px) saturate(0.05); }
+  20%  { opacity: 0.17; filter: blur(9px)    saturate(0.12); }
+  30%  { opacity: 0.3;  filter: blur(7.5px)  saturate(0.22); }
+  40%  { opacity: 0.44; filter: blur(6px)    saturate(0.35); }
+  50%  { opacity: 0.57; filter: blur(4.5px)  saturate(0.48); }
+  60%  { opacity: 0.7;  filter: blur(3px)    saturate(0.62); }
+  70%  { opacity: 0.82; filter: blur(2px)    saturate(0.75); }
+  80%  { opacity: 0.91; filter: blur(1px)    saturate(0.86); }
+  90%  { opacity: 0.97; filter: blur(0.3px)  saturate(0.95); }
+  100% { opacity: 1;    filter: blur(0px)    saturate(1);    }
+}
+
+/* 모션 감소 시 즉시 전환 / Instant on reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   다크 테마 변수 (기본값)
+   Dark theme variables (default)
+   ═══════════════════════════════════════ */
+:root {
+  --m-bg: #0f0f0f;
+  --m-card: #1a1a2e;
+  --m-card-inner: #0f0f1a;
+  --m-card-strategy: #111122;
+  --m-text: #e0e0e0;
+  --m-text-muted: #888888;
+  --m-text-dim: #444444;
+  --m-border: #2a2a4a;
+  --m-border-strategy: #333355;
+  --m-bar-bg: #333333;
+  --m-scrollbar-track: #0f0f0f;
+  --m-scrollbar-thumb: #333;
+  --m-scrollbar-hover: #555;
+  --m-green: #4dff4d;
+  --m-note-text: #999999;
+
+  /* 액센트 색상 — 테마 불문 동일 / Accent colors — same in both themes */
+  --m-accent: #00d4ff;
+  --m-high: #ff4d4d;
+  --m-moderate-color: #f5a623;
+  --m-low-color: #666666;
+
+  --background: var(--m-bg);
+  --foreground: var(--m-text);
+}
+
+/* ═══════════════════════════════════════
+   라이트 테마 변수
+   Light theme variables
+   ═══════════════════════════════════════ */
+html.light {
+  --m-bg: #f5f5f5;
+  --m-card: #ffffff;
+  --m-card-inner: #f0f0f5;
+  --m-card-strategy: #eeeef5;
+  --m-text: #1a1a1a;
+  --m-text-muted: #666666;
+  --m-text-dim: #aaaaaa;
+  --m-border: #d0d0e0;
+  --m-border-strategy: #c0c0d0;
+  --m-bar-bg: #d0d0d0;
+  --m-scrollbar-track: #f5f5f5;
+  --m-scrollbar-thumb: #c0c0c0;
+  --m-scrollbar-hover: #999999;
+  --m-green: #22aa22;
+  --m-note-text: #666666;
+
+  --background: var(--m-bg);
+  --foreground: var(--m-text);
+}
+
+/* 다크 테마 전용 커스텀 변수 */
+/* Dark theme custom variables */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-momentum-bg: var(--m-bg);
+  --color-momentum-card: var(--m-card);
+  --color-momentum-high: #ff4d4d;
+  --color-momentum-moderate: #f5a623;
+  --color-momentum-low: #666666;
+  --color-momentum-text: var(--m-text);
+  --color-momentum-accent: #00d4ff;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 스크롤바 스타일 (웹킷) / Scrollbar styles (webkit) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--m-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--m-scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--m-scrollbar-hover);
+}
+
+/* 인풋 포커스 링 커스텀 / Custom input focus ring */
+input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #00d4ff40;
 }
