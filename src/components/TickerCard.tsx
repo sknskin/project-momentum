@@ -3,15 +3,20 @@
 // 종목 카드 컴포넌트
 // Ticker card component
 
-import { TickerData, ScoringResult } from "@/lib/types";
+import { useMemo } from "react";
+import { TickerData, ScoringResult, MarketSession } from "@/lib/types";
 import { calculateScore, generateEntryStrategy } from "@/lib/scoring";
 import { calculateUndervaluedScore, generateUndervaluedEntryStrategy } from "@/lib/scoringUndervalued";
+import { getMarketSession } from "@/lib/marketSession";
 import { useLanguage } from "@/lib/i18n";
 import ScoreCriteriaBar from "./ScoreCriteriaBar";
 import EntryStrategyBox from "./EntryStrategyBox";
 
 /** 스코어링 모드 타입 / Scoring mode type */
 export type ScoringMode = "trending" | "undervalued";
+
+/** 카드에 표시할 최대 기준 수 / Max criteria to show on card */
+const CARD_MAX_CRITERIA = 5;
 
 interface TickerCardProps {
   data: TickerData;
@@ -76,6 +81,45 @@ function formatVolume(vol: number): string {
   return vol.toString();
 }
 
+/**
+ * 마켓 세션에 대한 번역된 라벨 반환 (카드용)
+ * Returns translated session label for card display
+ */
+function getSessionLabel(
+  session: MarketSession,
+  t: {
+    sessionPreMarket: string;
+    sessionMarketOpen: string;
+    sessionAfterHours: string;
+    sessionClosed: string;
+  }
+): string {
+  const map: Record<MarketSession, string> = {
+    PRE_MARKET: t.sessionPreMarket,
+    MARKET_OPEN: t.sessionMarketOpen,
+    AFTER_HOURS: t.sessionAfterHours,
+    CLOSED: t.sessionClosed,
+  };
+  return map[session];
+}
+
+/**
+ * 마켓 세션에 따른 배지 색상
+ * Badge color based on market session
+ */
+function getSessionColor(session: MarketSession): string {
+  switch (session) {
+    case "PRE_MARKET":
+      return "var(--m-accent)";
+    case "MARKET_OPEN":
+      return "var(--m-green)";
+    case "AFTER_HOURS":
+      return "var(--m-moderate-color)";
+    case "CLOSED":
+      return "var(--m-low-color)";
+  }
+}
+
 export default function TickerCard({ data, scoringMode = "trending", onClick }: TickerCardProps) {
   const { t } = useLanguage();
 
@@ -98,6 +142,20 @@ export default function TickerCard({ data, scoringMode = "trending", onClick }: 
         ? t.notesModerate
         : t.notesLow;
   const localizedStrategy = { ...strategy, notes: translatedNotes };
+
+  // #9: 기준을 점수 내림차순으로 정렬, 상위 5개만 표시
+  // #9: Sort criteria by score descending, show top 5 only
+  const sortedCriteria = useMemo(() => {
+    return [...scoring.criteria].sort((a, b) => b.score - a.score);
+  }, [scoring.criteria]);
+  const topCriteria = sortedCriteria.slice(0, CARD_MAX_CRITERIA);
+  const remainingCount = sortedCriteria.length - CARD_MAX_CRITERIA;
+
+  // #12: 세션 인식 라벨
+  // #12: Session-aware label
+  const session = useMemo(() => getMarketSession(), []);
+  const sessionLabel = getSessionLabel(session, t);
+  const sessionColor = getSessionColor(session);
 
   return (
     <div
@@ -150,8 +208,8 @@ export default function TickerCard({ data, scoringMode = "trending", onClick }: 
         </div>
       </div>
 
-      {/* 프리마켓 가격 변동 (크게 표시) */}
-      {/* Pre-market price change (large display) */}
+      {/* 프리마켓 가격 변동 (크게 표시) + 세션 라벨 */}
+      {/* Pre-market price change (large display) + session label */}
       <div className="mb-3">
         <div className="flex items-baseline gap-3">
           <span className="text-2xl font-bold font-mono" style={{ color: "var(--m-text)" }}>
@@ -163,6 +221,16 @@ export default function TickerCard({ data, scoringMode = "trending", onClick }: 
           >
             {data.preMarketChangePercent > 0 ? "+" : ""}
             {data.preMarketChangePercent.toFixed(2)}%
+          </span>
+          {/* #12: 세션 라벨 배지 / Session label badge */}
+          <span
+            className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+            style={{
+              color: sessionColor,
+              background: `color-mix(in srgb, ${sessionColor} 15%, transparent)`,
+            }}
+          >
+            {sessionLabel}
           </span>
         </div>
         <div className="flex gap-4 mt-1 text-xs" style={{ color: "var(--m-text-muted)" }}>
@@ -186,12 +254,17 @@ export default function TickerCard({ data, scoringMode = "trending", onClick }: 
         </span>
       </div>
 
-      {/* 7가지 스코어링 기준 바 */}
-      {/* 7 scoring criteria bars */}
+      {/* #9: 상위 5개 스코어링 기준 바 + 나머지 개수 표시 */}
+      {/* #9: Top 5 scoring criteria bars + remaining count */}
       <div className="mb-3">
-        {scoring.criteria.map((criterion, index) => (
+        {topCriteria.map((criterion, index) => (
           <ScoreCriteriaBar key={index} criterion={criterion} />
         ))}
+        {remainingCount > 0 && (
+          <p className="text-[10px] mt-1" style={{ color: "var(--m-text-muted)" }}>
+            {t.andMoreCriteria(remainingCount)}
+          </p>
+        )}
       </div>
 
       {/* 촉매 요약 / Catalyst summary */}
