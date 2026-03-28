@@ -78,6 +78,11 @@ interface Translations {
   criteriaSectorSentiment: string;
   criteriaGapHold: string;
   criteriaSocialBuzz: string;
+  criteriaTradingValue: string;
+  criteriaIntradayRange: string;
+  criteriaWeekHighProximity: string;
+  criteriaMarketCapCategory: string;
+  criteriaConsecutiveUpDays: string;
   // 스코어 기준 이름 (저평가 종목 탭)
   // Score criteria names (Undervalued tab)
   criteriaVolumeRatio: string;
@@ -87,6 +92,26 @@ interface Translations {
   criteriaSectorSentimentUV: string;
   criteria52WeekHighGap: string;
   criteriaInstitutionalVolume: string;
+  criteriaTradingValueVsMarketCap: string;
+  criteriaPriceStability: string;
+  criteriaSupportLevelProximity: string;
+  criteriaVolumeTrend: string;
+  criteriaBounceStrength: string;
+  // 모달 라벨 / Modal labels
+  modalPrevClose: string;
+  modalDayHigh: string;
+  modalDayLow: string;
+  modal52WeekHigh: string;
+  modal52WeekLow: string;
+  modalScoreDetail: string;
+  modalTotalScore: string;
+  modalVolumeAnalysis: string;
+  modalPreMarketVol: string;
+  modalAvgVol: string;
+  modalVolRatio: string;
+  modalEntryStrategy: string;
+  modalCatalysts: string;
+  modalDisclaimerFooter: string;
   // 면책 조항 / Disclaimer
   riskDisclaimer: string;
   disclaimerText: string;
@@ -153,6 +178,11 @@ const ko: Translations = {
   criteriaSectorSentiment: "섹터 심리",
   criteriaGapHold: "갭 유지",
   criteriaSocialBuzz: "소셜 버즈",
+  criteriaTradingValue: "거래대금",
+  criteriaIntradayRange: "전일 대비 변동 폭",
+  criteriaWeekHighProximity: "52주 최고가 근접도",
+  criteriaMarketCapCategory: "시가총액 규모",
+  criteriaConsecutiveUpDays: "연속 상승일",
   criteriaVolumeRatio: "거래량 비율",
   criteria52WeekLowProximity: "52주 최저가 근접도",
   criteriaPriceTrend: "가격 추세 패턴",
@@ -160,6 +190,25 @@ const ko: Translations = {
   criteriaSectorSentimentUV: "섹터 심리",
   criteria52WeekHighGap: "52주 최고가 갭",
   criteriaInstitutionalVolume: "기관 관심 거래량",
+  criteriaTradingValueVsMarketCap: "거래대금 대비 시가총액",
+  criteriaPriceStability: "가격 변동 안정성",
+  criteriaSupportLevelProximity: "지지선 근접도",
+  criteriaVolumeTrend: "거래량 증가 추세",
+  criteriaBounceStrength: "반등 강도",
+  modalPrevClose: "전일 종가",
+  modalDayHigh: "당일 고가",
+  modalDayLow: "당일 저가",
+  modal52WeekHigh: "52주 최고가",
+  modal52WeekLow: "52주 최저가",
+  modalScoreDetail: "스코어 상세",
+  modalTotalScore: "총점",
+  modalVolumeAnalysis: "거래량 분석",
+  modalPreMarketVol: "프리마켓 거래량",
+  modalAvgVol: "평균 거래량",
+  modalVolRatio: "거래량 비율",
+  modalEntryStrategy: "진입 전략",
+  modalCatalysts: "촉매 이벤트",
+  modalDisclaimerFooter: "이 정보는 투자 권유가 아닙니다",
   riskDisclaimer: "⚠ 투자 위험 고지",
   disclaimerText:
     "이 도구는 교육 및 정보 제공 목적으로만 제공됩니다. 투자 조언을 구성하지 않습니다. " +
@@ -223,6 +272,11 @@ const en: Translations = {
   criteriaSectorSentiment: "Sector Sentiment",
   criteriaGapHold: "Gap Hold",
   criteriaSocialBuzz: "Social Buzz",
+  criteriaTradingValue: "Trading Value",
+  criteriaIntradayRange: "Intraday Range",
+  criteriaWeekHighProximity: "52W High Proximity",
+  criteriaMarketCapCategory: "Market Cap Category",
+  criteriaConsecutiveUpDays: "Consecutive Up Days",
   criteriaVolumeRatio: "Volume Ratio",
   criteria52WeekLowProximity: "52W Low Proximity",
   criteriaPriceTrend: "Price Trend Pattern",
@@ -230,6 +284,25 @@ const en: Translations = {
   criteriaSectorSentimentUV: "Sector Sentiment",
   criteria52WeekHighGap: "52W High Gap",
   criteriaInstitutionalVolume: "Institutional Volume Interest",
+  criteriaTradingValueVsMarketCap: "Trading Value vs Market Cap",
+  criteriaPriceStability: "Price Stability",
+  criteriaSupportLevelProximity: "Support Level Proximity",
+  criteriaVolumeTrend: "Volume Trend",
+  criteriaBounceStrength: "Bounce Strength",
+  modalPrevClose: "Previous Close",
+  modalDayHigh: "Day High",
+  modalDayLow: "Day Low",
+  modal52WeekHigh: "52-Week High",
+  modal52WeekLow: "52-Week Low",
+  modalScoreDetail: "Score Detail",
+  modalTotalScore: "Total Score",
+  modalVolumeAnalysis: "Volume Analysis",
+  modalPreMarketVol: "Pre-Market Volume",
+  modalAvgVol: "Average Volume",
+  modalVolRatio: "Volume Ratio",
+  modalEntryStrategy: "Entry Strategy",
+  modalCatalysts: "Catalyst Events",
+  modalDisclaimerFooter: "This is not investment advice",
   riskDisclaimer: "⚠ RISK DISCLAIMER",
   disclaimerText:
     "This tool is for educational and informational purposes only. It does not constitute financial advice. " +

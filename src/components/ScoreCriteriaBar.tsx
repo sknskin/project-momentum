@@ -24,6 +24,11 @@ function getTranslatedName(
     criteriaSectorSentiment: string;
     criteriaGapHold: string;
     criteriaSocialBuzz: string;
+    criteriaTradingValue: string;
+    criteriaIntradayRange: string;
+    criteriaWeekHighProximity: string;
+    criteriaMarketCapCategory: string;
+    criteriaConsecutiveUpDays: string;
     criteriaVolumeRatio: string;
     criteria52WeekLowProximity: string;
     criteriaPriceTrend: string;
@@ -31,6 +36,11 @@ function getTranslatedName(
     criteriaSectorSentimentUV: string;
     criteria52WeekHighGap: string;
     criteriaInstitutionalVolume: string;
+    criteriaTradingValueVsMarketCap: string;
+    criteriaPriceStability: string;
+    criteriaSupportLevelProximity: string;
+    criteriaVolumeTrend: string;
+    criteriaBounceStrength: string;
   }
 ): string {
   const map: Record<AnyCriterionKey, string> = {
@@ -42,6 +52,11 @@ function getTranslatedName(
     sectorSentiment: t.criteriaSectorSentiment,
     gapHold: t.criteriaGapHold,
     socialBuzz: t.criteriaSocialBuzz,
+    tradingValue: t.criteriaTradingValue,
+    intradayRange: t.criteriaIntradayRange,
+    weekHighProximity: t.criteriaWeekHighProximity,
+    marketCapCategory: t.criteriaMarketCapCategory,
+    consecutiveUpDays: t.criteriaConsecutiveUpDays,
     // 저평가 종목 기준 / Undervalued criteria
     volumeRatio: t.criteriaVolumeRatio,
     weekLowProximity: t.criteria52WeekLowProximity,
@@ -50,6 +65,11 @@ function getTranslatedName(
     sectorSentimentUV: t.criteriaSectorSentimentUV,
     weekHighGap: t.criteria52WeekHighGap,
     institutionalVolume: t.criteriaInstitutionalVolume,
+    tradingValueVsMarketCap: t.criteriaTradingValueVsMarketCap,
+    priceStability: t.criteriaPriceStability,
+    supportLevelProximity: t.criteriaSupportLevelProximity,
+    volumeTrend: t.criteriaVolumeTrend,
+    bounceStrength: t.criteriaBounceStrength,
   };
   return map[key];
 }
