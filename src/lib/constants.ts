@@ -47,14 +47,45 @@ export const SCREENER_MAX_TICKERS = 25;
 export const MAX_SCORE_PER_CRITERION = 2;
 
 /** 전체 기준 개수 / Total number of criteria */
-export const TOTAL_CRITERIA_COUNT = 7;
+export const TOTAL_CRITERIA_COUNT = 12;
 
 /** 최대 총점 / Maximum total score */
 export const MAX_TOTAL_SCORE = MAX_SCORE_PER_CRITERION * TOTAL_CRITERIA_COUNT;
 
 /** 시그널 임계값 / Signal thresholds */
-export const HIGH_SIGNAL_THRESHOLD = 10;
-export const MODERATE_SIGNAL_THRESHOLD = 6;
+export const HIGH_SIGNAL_THRESHOLD = 18;
+export const MODERATE_SIGNAL_THRESHOLD = 10;
+
+/** 거래대금 임계값 ($) / Trading value thresholds ($) */
+export const TRADING_VALUE_HIGH = 50_000_000;
+export const TRADING_VALUE_MODERATE = 10_000_000;
+
+/** 장중 변동폭 임계값 (%) / Intraday range thresholds (%) */
+export const INTRADAY_RANGE_HIGH = 10;
+export const INTRADAY_RANGE_MODERATE = 5;
+
+/** 시가총액 카테고리 임계값 ($) / Market cap category thresholds ($) */
+export const MARKET_CAP_LARGE = 10_000_000_000;
+export const MARKET_CAP_MID = 2_000_000_000;
+
+/** 연속 상승일 임계값 / Consecutive up days thresholds */
+export const CONSECUTIVE_UP_DAYS_HIGH = 3;
+export const CONSECUTIVE_UP_DAYS_MODERATE = 2;
+
+/** 저평가: 거래대금 대비 시가총액 비율 임계값 (%)
+ *  Undervalued: Trading value vs market cap ratio thresholds (%) */
+export const ACCUMULATION_RATIO_HIGH = 5;
+export const ACCUMULATION_RATIO_MODERATE = 2;
+
+/** 저평가: 가격 안정성 스프레드 임계값 (%)
+ *  Undervalued: Price stability spread thresholds (%) */
+export const STABILITY_SPREAD_HIGH = 2;
+export const STABILITY_SPREAD_MODERATE = 5;
+
+/** 저평가: 반등 강도 임계값 (%)
+ *  Undervalued: Bounce strength thresholds (%) */
+export const BOUNCE_STRENGTH_HIGH = 20;
+export const BOUNCE_STRENGTH_MODERATE = 10;
 
 /** 거래량 비율 임계값 / Volume ratio thresholds */
 export const VOLUME_RATIO_HIGH = 2.0;

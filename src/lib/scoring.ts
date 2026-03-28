@@ -17,6 +17,14 @@ import {
   SOCIAL_BUZZ_MIN,
   SOCIAL_BUZZ_MAX,
   TOTAL_CRITERIA_COUNT,
+  TRADING_VALUE_HIGH,
+  TRADING_VALUE_MODERATE,
+  INTRADAY_RANGE_HIGH,
+  INTRADAY_RANGE_MODERATE,
+  MARKET_CAP_LARGE,
+  MARKET_CAP_MID,
+  CONSECUTIVE_UP_DAYS_HIGH,
+  CONSECUTIVE_UP_DAYS_MODERATE,
 } from "./constants";
 
 /**
@@ -229,6 +237,180 @@ function scorePriceStability(data: TickerData): ScoreCriterion {
 }
 
 /**
+ * C8: 거래대금 평가 (가격 x 거래량)
+ * C8: Trading value evaluation (price x volume)
+ */
+function scoreTradingValue(data: TickerData): ScoreCriterion {
+  const tradingValue = data.preMarketPrice * data.preMarketVolume;
+  let score = 0;
+
+  if (tradingValue >= TRADING_VALUE_HIGH) {
+    score = 2;
+  } else if (tradingValue >= TRADING_VALUE_MODERATE) {
+    score = 1;
+  }
+
+  // 거래대금을 읽기 쉬운 형태로 포맷
+  // Format trading value for readability
+  const formatted =
+    tradingValue >= 1_000_000
+      ? `$${(tradingValue / 1_000_000).toFixed(1)}M`
+      : `$${(tradingValue / 1_000).toFixed(0)}K`;
+
+  return {
+    key: "tradingValue",
+    name: "Trading Value",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `High trading value: ${formatted}`
+        : score === 1
+          ? `Moderate trading value: ${formatted}`
+          : `Low trading value: ${formatted}`,
+  };
+}
+
+/**
+ * C9: 전일 종가 대비 변동 폭 (장중 고가-저가 범위)
+ * C9: Intraday range vs previous close
+ */
+function scoreIntradayRange(data: TickerData): ScoreCriterion {
+  const range =
+    data.prevClose > 0
+      ? ((data.dayHigh - data.dayLow) / data.prevClose) * 100
+      : 0;
+  let score = 0;
+
+  if (range >= INTRADAY_RANGE_HIGH) {
+    score = 2;
+  } else if (range >= INTRADAY_RANGE_MODERATE) {
+    score = 1;
+  }
+
+  return {
+    key: "intradayRange",
+    name: "Intraday Range",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `Wide range: ${range.toFixed(1)}% of prev close`
+        : score === 1
+          ? `Moderate range: ${range.toFixed(1)}% of prev close`
+          : `Narrow range: ${range.toFixed(1)}% of prev close`,
+  };
+}
+
+/**
+ * C10: 52주 최고가 근접도 (화제 종목용)
+ * C10: 52-week high proximity (trending)
+ */
+function score52WeekHighProximity(data: TickerData): ScoreCriterion {
+  const distanceFromHigh =
+    data.fiftyTwoWeekHigh > 0
+      ? ((data.fiftyTwoWeekHigh - data.preMarketPrice) / data.fiftyTwoWeekHigh) * 100
+      : 100;
+  let score = 0;
+
+  // 10% 이내면 2점, 10-30% 이내면 1점
+  // Within 10% → 2pts, 10-30% → 1pt
+  if (distanceFromHigh <= 10) {
+    score = 2;
+  } else if (distanceFromHigh <= 30) {
+    score = 1;
+  }
+
+  return {
+    key: "weekHighProximity",
+    name: "52W High Proximity",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `Near 52W high (${distanceFromHigh.toFixed(1)}% away)`
+        : score === 1
+          ? `Approaching 52W high (${distanceFromHigh.toFixed(1)}% away)`
+          : `Far from 52W high (${distanceFromHigh.toFixed(1)}% away)`,
+  };
+}
+
+/**
+ * C11: 시가총액 규모 (시뮬레이션)
+ * C11: Market cap category (simulated)
+ * 주의: 시가총액은 시뮬레이션입니다
+ * NOTE: Market cap is SIMULATED
+ */
+function scoreMarketCapCategory(data: TickerData): ScoreCriterion {
+  // 시가총액을 가격 기반으로 추정 (시뮬레이션)
+  // Estimate market cap from price (simulated)
+  const hash = data.symbol.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const estimatedMarketCap = data.preMarketPrice * (1_000_000 + (hash % 500_000_000));
+
+  let score = 0;
+  let label: string;
+
+  // 소형주일수록 높은 점수 (폭발적 성장 가능성)
+  // Smaller cap = higher score (more explosive potential)
+  if (estimatedMarketCap < MARKET_CAP_MID) {
+    score = 2;
+    label = "Small/Micro cap";
+  } else if (estimatedMarketCap < MARKET_CAP_LARGE) {
+    score = 1;
+    label = "Mid cap";
+  } else {
+    score = 0;
+    label = "Large cap";
+  }
+
+  return {
+    key: "marketCapCategory",
+    name: "Market Cap (Simulated)",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      `${label} [SIMULATED]`,
+  };
+}
+
+/**
+ * C12: 연속 상승일 (시뮬레이션)
+ * C12: Consecutive up days (simulated)
+ * 주의: 연속 상승일 데이터는 시뮬레이션입니다
+ * NOTE: Consecutive up days data is SIMULATED
+ */
+function scoreConsecutiveUpDays(data: TickerData): ScoreCriterion {
+  // 심볼 해시 + 가격 변동 기반 시뮬레이션
+  // Simulated based on symbol hash + price change
+  const hash = data.symbol.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const baseDays = hash % 6;
+  // 양의 변동이면 연속 상승 가능성 높음
+  // Positive change increases likelihood of consecutive up
+  const consecutiveDays = data.preMarketChangePercent > 0 ? baseDays : Math.max(0, baseDays - 2);
+
+  let score = 0;
+
+  if (consecutiveDays >= CONSECUTIVE_UP_DAYS_HIGH) {
+    score = 2;
+  } else if (consecutiveDays >= CONSECUTIVE_UP_DAYS_MODERATE) {
+    score = 1;
+  }
+
+  return {
+    key: "consecutiveUpDays",
+    name: "Consecutive Up Days (Simulated)",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `Strong streak: ${consecutiveDays} days [SIMULATED]`
+        : score === 1
+          ? `Short streak: ${consecutiveDays} days [SIMULATED]`
+          : `No streak: ${consecutiveDays} days [SIMULATED]`,
+  };
+}
+
+/**
  * 전체 스코어 계산
  * Calculates the total momentum score for a ticker
  */
@@ -241,6 +423,11 @@ export function calculateScore(data: TickerData): ScoringResult {
     scoreCatalysts(data),
     scoreSocialBuzz(data),
     scorePriceStability(data),
+    scoreTradingValue(data),
+    scoreIntradayRange(data),
+    score52WeekHighProximity(data),
+    scoreMarketCapCategory(data),
+    scoreConsecutiveUpDays(data),
   ];
 
   const total = criteria.reduce((sum, c) => sum + c.score, 0);

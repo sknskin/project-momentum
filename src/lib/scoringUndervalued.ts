@@ -15,6 +15,12 @@ import {
   MODERATE_GAP_FROM_52W_HIGH_THRESHOLD,
   RECOVERY_HIGH_THRESHOLD,
   RECOVERY_MODERATE_THRESHOLD,
+  ACCUMULATION_RATIO_HIGH,
+  ACCUMULATION_RATIO_MODERATE,
+  STABILITY_SPREAD_HIGH,
+  STABILITY_SPREAD_MODERATE,
+  BOUNCE_STRENGTH_HIGH,
+  BOUNCE_STRENGTH_MODERATE,
 } from "./constants";
 
 /**
@@ -248,6 +254,188 @@ function scoreInstitutionalVolume(data: TickerData): ScoreCriterion {
 }
 
 /**
+ * C8: 거래대금 대비 시가총액 비율 (매집 시그널)
+ * C8: Trading value vs estimated market cap (accumulation signal)
+ * 주의: 시가총액은 시뮬레이션입니다
+ * NOTE: Market cap is SIMULATED
+ */
+function scoreTradingValueVsMarketCap(data: TickerData): ScoreCriterion {
+  const tradingValue = data.preMarketPrice * data.preMarketVolume;
+  // 시가총액을 심볼 해시 기반으로 추정 (시뮬레이션)
+  // Estimate market cap from symbol hash (simulated)
+  const hash = data.symbol.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const estimatedMarketCap = data.preMarketPrice * (1_000_000 + (hash % 500_000_000));
+  const ratio = estimatedMarketCap > 0 ? (tradingValue / estimatedMarketCap) * 100 : 0;
+
+  let score = 0;
+
+  // 높은 비율 = 매집 시그널
+  // High ratio = accumulation signal
+  if (ratio >= ACCUMULATION_RATIO_HIGH) {
+    score = 2;
+  } else if (ratio >= ACCUMULATION_RATIO_MODERATE) {
+    score = 1;
+  }
+
+  return {
+    key: "tradingValueVsMarketCap",
+    name: "Trading Value vs Market Cap",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `High accumulation signal: ${ratio.toFixed(2)}% [SIMULATED]`
+        : score === 1
+          ? `Moderate accumulation: ${ratio.toFixed(2)}% [SIMULATED]`
+          : `Low accumulation: ${ratio.toFixed(2)}% [SIMULATED]`,
+  };
+}
+
+/**
+ * C9: 가격 변동 안정성 (가격 대비 장중 변동폭)
+ * C9: Price stability (intraday range vs price)
+ */
+function scorePriceStabilityUV(data: TickerData): ScoreCriterion {
+  const range =
+    data.preMarketPrice > 0
+      ? ((data.dayHigh - data.dayLow) / data.preMarketPrice) * 100
+      : 0;
+  let score = 0;
+
+  // 변동폭이 작을수록 안정적인 회복 신호
+  // Smaller range = stable recovery signal
+  if (range <= STABILITY_SPREAD_HIGH) {
+    score = 2;
+  } else if (range <= STABILITY_SPREAD_MODERATE) {
+    score = 1;
+  }
+
+  return {
+    key: "priceStability",
+    name: "Price Stability",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `Very stable: ${range.toFixed(1)}% range`
+        : score === 1
+          ? `Moderately stable: ${range.toFixed(1)}% range`
+          : `Unstable: ${range.toFixed(1)}% range`,
+  };
+}
+
+/**
+ * C10: 이전 지지선 근접도 (52주 최저가와 당일 저가의 중간값 대비)
+ * C10: Support level proximity (near midpoint of 52W low and day low)
+ */
+function scoreSupportLevelProximity(data: TickerData): ScoreCriterion {
+  // 지지선을 52주 최저가와 당일 저가의 중간값으로 추정
+  // Estimate support level as midpoint of 52W low and day low
+  const supportLevel =
+    data.fiftyTwoWeekLow > 0 && data.dayLow > 0
+      ? (data.fiftyTwoWeekLow + data.dayLow) / 2
+      : 0;
+
+  const distance =
+    supportLevel > 0
+      ? ((data.preMarketPrice - supportLevel) / supportLevel) * 100
+      : 100;
+
+  let score = 0;
+
+  // 지지선에 가까울수록 반등 가능성 높음
+  // Closer to support = higher bounce potential
+  if (distance <= 5) {
+    score = 2;
+  } else if (distance <= 15) {
+    score = 1;
+  }
+
+  return {
+    key: "supportLevelProximity",
+    name: "Support Level Proximity",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `Near support: +${distance.toFixed(1)}% above`
+        : score === 1
+          ? `Close to support: +${distance.toFixed(1)}% above`
+          : `Far from support: +${distance.toFixed(1)}% above`,
+  };
+}
+
+/**
+ * C11: 거래량 증가 추세 (시뮬레이션)
+ * C11: Volume trend (simulated)
+ * 주의: 거래량 추세 데이터는 시뮬레이션입니다
+ * NOTE: Volume trend data is SIMULATED
+ */
+function scoreVolumeTrend(data: TickerData): ScoreCriterion {
+  // 거래량 비율과 심볼 해시로 추세 시뮬레이션
+  // Simulate trend using volume ratio and symbol hash
+  const hash = data.symbol.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const trendBias = hash % 3; // 0: decreasing, 1: flat, 2: increasing
+
+  let score = 0;
+  let label: string;
+
+  // 거래량 비율이 높으면 증가 추세로 간주
+  // Higher volume ratio biases toward increasing trend
+  if (trendBias === 2 || data.volumeRatio >= VOLUME_RATIO_HIGH) {
+    score = 2;
+    label = "Increasing";
+  } else if (trendBias === 1 || data.volumeRatio >= VOLUME_RATIO_MODERATE) {
+    score = 1;
+    label = "Flat";
+  } else {
+    score = 0;
+    label = "Decreasing";
+  }
+
+  return {
+    key: "volumeTrend",
+    name: "Volume Trend (Simulated)",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      `${label} volume trend [SIMULATED]`,
+  };
+}
+
+/**
+ * C12: 반등 강도 (52주 최저가 대비 회복률)
+ * C12: Bounce strength (recovery from 52-week low)
+ */
+function scoreBounceStrength(data: TickerData): ScoreCriterion {
+  const bouncePercent =
+    data.fiftyTwoWeekLow > 0
+      ? ((data.preMarketPrice - data.fiftyTwoWeekLow) / data.fiftyTwoWeekLow) * 100
+      : 0;
+
+  let score = 0;
+
+  if (bouncePercent >= BOUNCE_STRENGTH_HIGH) {
+    score = 2;
+  } else if (bouncePercent >= BOUNCE_STRENGTH_MODERATE) {
+    score = 1;
+  }
+
+  return {
+    key: "bounceStrength",
+    name: "Bounce Strength",
+    score,
+    maxScore: MAX_SCORE_PER_CRITERION,
+    description:
+      score === 2
+        ? `Strong bounce: +${bouncePercent.toFixed(1)}% from 52W low`
+        : score === 1
+          ? `Moderate bounce: +${bouncePercent.toFixed(1)}% from 52W low`
+          : `Weak bounce: +${bouncePercent.toFixed(1)}% from 52W low`,
+  };
+}
+
+/**
  * 저평가 종목 전체 스코어 계산
  * Calculates the total undervalue score for a ticker
  */
@@ -260,6 +448,11 @@ export function calculateUndervaluedScore(data: TickerData): ScoringResult {
     scoreSectorSentiment(data),
     score52WeekHighGap(data),
     scoreInstitutionalVolume(data),
+    scoreTradingValueVsMarketCap(data),
+    scorePriceStabilityUV(data),
+    scoreSupportLevelProximity(data),
+    scoreVolumeTrend(data),
+    scoreBounceStrength(data),
   ];
 
   const total = criteria.reduce((sum, c) => sum + c.score, 0);
