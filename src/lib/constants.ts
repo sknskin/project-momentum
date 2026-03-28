@@ -129,15 +129,49 @@ export const MODERATE_GAP_FROM_52W_HIGH_THRESHOLD = 20;
 export const RECOVERY_HIGH_THRESHOLD = 10;
 export const RECOVERY_MODERATE_THRESHOLD = 3;
 
-/** 저평가 스크리너 URL 목록
- *  Undervalued screener URL list */
+/** 저평가 스크리너 URL 목록 (저평가 스크리너 우선, 활성/상승 종목은 폴백)
+ *  Undervalued screener URL list (undervalued screeners first, actives/gainers as fallback) */
 export const UNDERVALUED_SCREENER_URLS = [
   {
+    url: "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=undervalued_large_caps&count=25",
+    label: "Yahoo Finance Undervalued Large Caps",
+  },
+  {
+    url: "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=undervalued_growth_stocks&count=25",
+    label: "Yahoo Finance Undervalued Growth Stocks",
+  },
+] as const;
+
+/** 저평가 스크리너 폴백 URL (저평가 스크리너 실패 시 사용)
+ *  Undervalued screener fallback URLs (used when undervalued screeners fail) */
+export const UNDERVALUED_FALLBACK_URLS = [
+  {
     url: "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=most_actives&count=25",
-    label: "Yahoo Finance Most Actives",
+    label: "Yahoo Finance Most Actives (Fallback)",
   },
   {
     url: "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?scrIds=day_gainers&count=25",
-    label: "Yahoo Finance Day Gainers",
+    label: "Yahoo Finance Day Gainers (Fallback)",
   },
 ] as const;
+
+/** 평균 일일 거래량 기본값 (소형주 대응)
+ *  Default average daily volume (realistic for small caps) */
+export const DEFAULT_AVG_DAILY_VOLUME = 500_000;
+
+/** Yahoo Finance fetch 타임아웃 (밀리초)
+ *  Yahoo Finance fetch timeout (milliseconds) */
+export const FETCH_TIMEOUT_MS = 8_000;
+
+/** Yahoo Finance 캐시 유효 시간 (밀리초)
+ *  Yahoo Finance cache TTL (milliseconds) */
+export const CACHE_TTL_MS = 45_000;
+
+/** 429 재시도 대기 시간 (밀리초)
+ *  429 retry wait time (milliseconds) */
+export const RATE_LIMIT_RETRY_DELAY_MS = 2_000;
+
+/** 거래대금 효율성 임계값 (가격 변동 % / 거래대금 백만달러)
+ *  Trading value efficiency thresholds (price change % / trading value $M) */
+export const TRADING_EFFICIENCY_HIGH = 1.0;
+export const TRADING_EFFICIENCY_MODERATE = 0.3;
