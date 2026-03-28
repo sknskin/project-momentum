@@ -18,6 +18,9 @@ interface TickerCardProps {
   /** 스코어링 모드 (기본: trending)
    *  Scoring mode (default: trending) */
   scoringMode?: ScoringMode;
+  /** 카드 클릭 시 호출되는 콜백
+   *  Callback called when card is clicked */
+  onClick?: (data: TickerData) => void;
 }
 
 /**
@@ -73,7 +76,7 @@ function formatVolume(vol: number): string {
   return vol.toString();
 }
 
-export default function TickerCard({ data, scoringMode = "trending" }: TickerCardProps) {
+export default function TickerCard({ data, scoringMode = "trending", onClick }: TickerCardProps) {
   const { t } = useLanguage();
 
   // 스코어링 모드에 따라 다른 스코어링/전략 사용
@@ -98,10 +101,19 @@ export default function TickerCard({ data, scoringMode = "trending" }: TickerCar
 
   return (
     <div
-      className="rounded-xl border p-4 transition-colors"
+      className="rounded-xl border p-4 transition-colors cursor-pointer hover:border-[var(--m-accent)]"
       style={{
         background: "var(--m-card)",
         borderColor: "var(--m-border)",
+      }}
+      onClick={() => onClick?.(data)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.(data);
+        }
       }}
     >
       {/* 상단: 심볼, 회사명, LIVE/DEMO 배지 */}

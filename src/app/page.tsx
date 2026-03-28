@@ -9,8 +9,11 @@ import { TickerData, ScreenerApiResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { useTheme } from "@/lib/ThemeContext";
 import TickerCard from "@/components/TickerCard";
+import StockDetailModal from "@/components/StockDetailModal";
 import MarketSessionBadge from "@/components/MarketSessionBadge";
 import RefreshCountdown from "@/components/RefreshCountdown";
+import { calculateScore, generateEntryStrategy } from "@/lib/scoring";
+import { calculateUndervaluedScore, generateUndervaluedEntryStrategy } from "@/lib/scoringUndervalued";
 
 /** 탭 타입 / Tab type */
 type TabType = "undervalued" | "trending";
@@ -75,6 +78,10 @@ function HomePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [undervaluedSource, setUndervaluedSource] = useState<string | null>(null);
   const [trendingSource, setTrendingSource] = useState<string | null>(null);
+
+  // 선택된 종목 (모달 표시용)
+  // Selected ticker (for modal display)
+  const [selectedTicker, setSelectedTicker] = useState<TickerData | null>(null);
 
   const { t, toggleLanguage, language } = useLanguage();
   const { theme, toggleTheme } = useTheme();
@@ -399,11 +406,33 @@ function HomePageContent() {
                 key={ticker.symbol}
                 data={ticker}
                 scoringMode={activeTab === "undervalued" ? "undervalued" : "trending"}
+                onClick={setSelectedTicker}
               />
             ))}
           </div>
         )}
       </main>
+
+      {/* 종목 상세 모달 / Stock detail modal */}
+      {selectedTicker && (() => {
+        const mode = activeTab === "undervalued" ? "undervalued" : "trending";
+        const modalScoring = mode === "undervalued"
+          ? calculateUndervaluedScore(selectedTicker)
+          : calculateScore(selectedTicker);
+        const modalStrategy = mode === "undervalued"
+          ? generateUndervaluedEntryStrategy(selectedTicker, modalScoring)
+          : generateEntryStrategy(selectedTicker, modalScoring);
+
+        return (
+          <StockDetailModal
+            data={selectedTicker}
+            scoring={modalScoring}
+            strategy={modalStrategy}
+            scoringMode={mode}
+            onClose={() => setSelectedTicker(null)}
+          />
+        );
+      })()}
 
       {/* 하단 면책 조항 배너 / Bottom risk disclaimer banner */}
       <footer
