@@ -261,78 +261,67 @@ export default function StockDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end md:items-center justify-center"
-      style={{ background: "rgba(0, 0, 0, 0.6)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in-up"
       onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-label={`${data.symbol} ${data.companyName}`}
     >
-      {/* 모달 본체 — 모바일: 풀스크린 바텀시트, 데스크톱: 중앙 모달 */}
-      {/* Modal body — Mobile: full-screen bottom sheet, Desktop: centered modal */}
+      {/* 모달 본체 — 모든 화면에서 중앙 정렬 */}
+      {/* Modal body — centered on all screen sizes */}
       <div
         ref={modalRef}
-        className="
-          w-full max-h-[95vh] md:max-h-[85vh] md:max-w-2xl md:rounded-xl
-          rounded-t-xl overflow-y-auto
-          border-t md:border
-          animate-[slideUp_0.3s_ease-out]
-        "
+        className="relative w-full max-w-2xl lg:max-w-4xl rounded-2xl border p-4 sm:p-6 lg:p-8 shadow-2xl max-h-[95vh] overflow-y-auto"
         style={{
-          background: "var(--m-bg)",
+          background: "var(--m-card)",
           borderColor: "var(--m-border)",
+          color: "var(--m-text)",
         }}
       >
+        {/* 닫기 버튼 — 우측 상단 / Close button — top-right */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+          style={{
+            background: "var(--m-card-inner)",
+            color: "var(--m-text-muted)",
+          }}
+          aria-label="Close"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M1 1l12 12M13 1L1 13" />
+          </svg>
+        </button>
+
         {/* ===== 헤더 ===== */}
         {/* ===== Header ===== */}
-        <div
-          className="sticky top-0 z-10 flex items-center justify-between p-4 border-b backdrop-blur-sm"
-          style={{
-            background: "color-mix(in srgb, var(--m-bg) 95%, transparent)",
-            borderColor: "var(--m-border)",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <h2
-              className="text-xl font-bold"
-              style={{ color: "var(--m-text)" }}
-            >
-              {data.symbol}
-            </h2>
-            <span
-              className="text-sm"
-              style={{ color: "var(--m-text-muted)" }}
-            >
-              {data.companyName}
-            </span>
-            {/* LIVE 배지 / LIVE badge */}
-            <span
-              className="px-2 py-0.5 text-[10px] font-bold rounded-full border"
-              style={{
-                background: "color-mix(in srgb, var(--m-green) 20%, transparent)",
-                color: "var(--m-green)",
-                borderColor: "color-mix(in srgb, var(--m-green) 40%, transparent)",
-              }}
-            >
-              {t.live}
-            </span>
-          </div>
-          {/* 닫기 버튼 / Close button */}
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full border transition-colors cursor-pointer"
-            style={{
-              background: "var(--m-card)",
-              borderColor: "var(--m-border)",
-              color: "var(--m-text-muted)",
-            }}
-            aria-label="Close"
+        <div className="flex items-center gap-3 mb-5 pr-10">
+          <h2
+            className="text-xl font-bold"
+            style={{ color: "var(--m-text)" }}
           >
-            ✕
-          </button>
+            {data.symbol}
+          </h2>
+          <span
+            className="text-sm"
+            style={{ color: "var(--m-text-muted)" }}
+          >
+            {data.companyName}
+          </span>
+          {/* LIVE 배지 / LIVE badge */}
+          <span
+            className="px-2 py-0.5 text-[10px] font-bold rounded-full border"
+            style={{
+              background: "color-mix(in srgb, var(--m-green) 20%, transparent)",
+              color: "var(--m-green)",
+              borderColor: "color-mix(in srgb, var(--m-green) 40%, transparent)",
+            }}
+          >
+            {t.live}
+          </span>
         </div>
 
-        <div className="p-4 space-y-5">
+        <div className="space-y-5">
           {/* ===== 가격 섹션 ===== */}
           {/* ===== Price Section ===== */}
           <section>
@@ -697,19 +686,6 @@ export default function StockDetailModal({
         </div>
       </div>
 
-      {/* 슬라이드 업 애니메이션 / Slide up animation */}
-      <style>{`
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }
