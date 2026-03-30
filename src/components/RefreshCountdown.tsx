@@ -27,19 +27,24 @@ export default function RefreshCountdown({ onRefresh }: RefreshCountdownProps) {
     setSecondsLeft(REFRESH_INTERVAL_SEC);
   }, []);
 
+  // 카운트다운 타이머 — 1초마다 감소만 수행
+  // Countdown timer — only decrements every second
   useEffect(() => {
     const timer = setInterval(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          onRefresh();
-          return REFRESH_INTERVAL_SEC;
-        }
-        return prev - 1;
-      });
+      setSecondsLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [onRefresh]);
+  }, []);
+
+  // 카운트다운이 0에 도달하면 새로고침 실행 (렌더링 외부에서 부모 상태 갱신)
+  // Trigger refresh when countdown reaches 0 (parent setState outside of render)
+  useEffect(() => {
+    if (secondsLeft === 0) {
+      onRefresh();
+      setSecondsLeft(REFRESH_INTERVAL_SEC);
+    }
+  }, [secondsLeft, onRefresh]);
 
   // 원형 프로그레스 오프셋 계산
   // Calculate circular progress offset
