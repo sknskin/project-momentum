@@ -41,7 +41,7 @@ export const SCREENER_URLS = [
 export const TRENDING_URL = "https://query1.finance.yahoo.com/v1/finance/trending/US";
 
 /** 스크리너 최대 종목 수 / Maximum tickers from screener */
-export const SCREENER_MAX_TICKERS = 25;
+export const SCREENER_MAX_TICKERS = 20;
 
 /** 스코어링 기준 최대 점수 / Max score per criterion */
 export const MAX_SCORE_PER_CRITERION = 2;
