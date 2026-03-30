@@ -5,7 +5,7 @@
 
 import { Suspense, useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { TickerData, ScreenerApiResponse, StockApiResponse } from "@/lib/types";
+import { TickerData, ScreenerApiResponse } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
 import { useTheme } from "@/lib/ThemeContext";
 import TickerCard from "@/components/TickerCard";
@@ -16,6 +16,9 @@ import MarketSessionBadge from "@/components/MarketSessionBadge";
 import RefreshCountdown from "@/components/RefreshCountdown";
 import { calculateScore, generateEntryStrategy } from "@/lib/scoring";
 import { calculateUndervaluedScore, generateUndervaluedEntryStrategy } from "@/lib/scoringUndervalued";
+import InfoTooltip from "@/components/InfoTooltip";
+import SearchModal from "@/components/SearchModal";
+import { Sun, Moon, Search } from "lucide-react";
 
 /** 탭 타입 / Tab type */
 type TabType = "undervalued" | "trending";
@@ -95,10 +98,9 @@ function HomePageContent() {
   // #6: Sort key state
   const [sortKey, setSortKey] = useState<SortKey>("score");
 
-  // #7: 검색 입력 상태
-  // #7: Search input state
-  const [searchInput, setSearchInput] = useState("");
-  const [searching, setSearching] = useState(false);
+  // #7: 검색 모달 상태
+  // #7: Search modal state
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // 선택된 종목 (모달 표시용)
   // Selected ticker (for modal display)
@@ -224,43 +226,6 @@ function HomePageContent() {
     fetchTabData(activeTab);
   }, [activeTab, fetchTabData]);
 
-  /**
-   * #7: 수동 검색 핸들러
-   * #7: Manual search handler
-   */
-  const handleSearch = useCallback(async () => {
-    const symbol = searchInput.trim().toUpperCase();
-    if (!symbol) return;
-
-    setSearching(true);
-    try {
-      const response = await fetch(`/api/stock/${symbol}`);
-      const data = (await response.json()) as StockApiResponse;
-
-      if (data.success && data.data) {
-        // 현재 활성 탭의 세터를 사용하여 결과를 맨 위에 추가
-        // Add result to top of current active tab
-        const setTickers = activeTab === "undervalued" ? setUndervaluedTickers : setTrendingTickers;
-        setTickers((prev) => {
-          // 이미 있는 종목이면 중복 추가하지 않음
-          // Skip if already in list
-          const exists = prev.some((t) => t.symbol === data.data.symbol);
-          if (exists) return prev;
-          return [data.data, ...prev];
-        });
-        setSearchInput("");
-      } else {
-        const errorMsg = data.error ?? `${symbol} 데이터를 가져올 수 없습니다`;
-        setErrorBanner(errorMsg);
-      }
-    } catch (err) {
-      console.error("[handleSearch] Unexpected error:", err);
-      setErrorBanner(t.cannotFetchHotStocks);
-    } finally {
-      setSearching(false);
-    }
-  }, [searchInput, activeTab, t.cannotFetchHotStocks]);
-
   // 현재 탭의 데이터
   // Current tab data
   const { tickers, source } = getActiveTabState();
@@ -298,6 +263,24 @@ function HomePageContent() {
     return sorted;
   }, [tickers, sortKey, activeTab]);
 
+  // 랭킹 목록용 — 항상 점수 내림차순 정렬 (사용자 정렬과 무관)
+  // For ranking list — always sorted by score descending (regardless of user sort)
+  const rankedTickers = useMemo(() => {
+    if (tickers.length === 0) return tickers;
+
+    const ranked = [...tickers];
+    ranked.sort((a, b) => {
+      const scoreA = activeTab === "undervalued"
+        ? calculateUndervaluedScore(a).total
+        : calculateScore(a).total;
+      const scoreB = activeTab === "undervalued"
+        ? calculateUndervaluedScore(b).total
+        : calculateScore(b).total;
+      return scoreB - scoreA;
+    });
+    return ranked.slice(0, 20);
+  }, [tickers, activeTab]);
+
   return (
     <div
       className="min-h-screen flex flex-col"
@@ -329,25 +312,23 @@ function HomePageContent() {
               {/* 테마 토글 버튼 / Theme toggle button */}
               <button
                 onClick={toggleTheme}
-                className="px-3 py-1.5 text-xs font-bold rounded-full border transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg transition-colors cursor-pointer"
                 style={{
                   background: "var(--m-card)",
-                  borderColor: "var(--m-border)",
                   color: "var(--m-text)",
                 }}
                 title={t.themeToggle}
                 aria-label={t.themeToggle}
               >
-                {theme === "dark" ? "☀️" : "🌙"}
+                {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
               </button>
 
               {/* 언어 토글 버튼 / Language toggle button */}
               <button
                 onClick={toggleLanguage}
-                className="px-3 py-1.5 text-xs font-bold rounded-full border transition-colors cursor-pointer"
+                className="px-2 py-1 rounded-lg text-xs font-mono font-medium transition-colors cursor-pointer"
                 style={{
                   background: "var(--m-card)",
-                  borderColor: "var(--m-border)",
                   color: "var(--m-accent)",
                 }}
                 title={language === "ko" ? "Switch to English" : "한국어로 전환"}
@@ -362,40 +343,48 @@ function HomePageContent() {
 
           {/* 탭 바 / Tab bar */}
           <div className="flex gap-0 mb-4 border-b" style={{ borderColor: "var(--m-border)" }}>
-            <button
-              onClick={() => switchTab("undervalued")}
-              className="px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer relative"
-              style={{
-                color: activeTab === "undervalued" ? "var(--m-accent)" : "var(--m-text-muted)",
-                background: "transparent",
-              }}
-            >
-              {t.tabUndervalued}
-              {/* 활성 탭 밑줄 / Active tab underline */}
-              {activeTab === "undervalued" && (
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ background: "var(--m-accent)" }}
-                />
-              )}
-            </button>
-            <button
-              onClick={() => switchTab("trending")}
-              className="px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer relative"
-              style={{
-                color: activeTab === "trending" ? "var(--m-accent)" : "var(--m-text-muted)",
-                background: "transparent",
-              }}
-            >
-              {t.tabTrending}
-              {/* 활성 탭 밑줄 / Active tab underline */}
-              {activeTab === "trending" && (
-                <span
-                  className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ background: "var(--m-accent)" }}
-                />
-              )}
-            </button>
+            <div className="flex items-center">
+              <button
+                onClick={() => switchTab("undervalued")}
+                className="px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer relative"
+                style={{
+                  color: activeTab === "undervalued" ? "var(--m-accent)" : "var(--m-text-muted)",
+                  background: "transparent",
+                }}
+              >
+                {t.tabUndervalued}
+                {/* 활성 탭 밑줄 / Active tab underline */}
+                {activeTab === "undervalued" && (
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-0.5"
+                    style={{ background: "var(--m-accent)" }}
+                  />
+                )}
+              </button>
+              {/* 저평가 종목 탭 정보 툴팁 / Undervalued tab info tooltip */}
+              <InfoTooltip text={t.tooltipUndervalued} />
+            </div>
+            <div className="flex items-center">
+              <button
+                onClick={() => switchTab("trending")}
+                className="px-4 py-2.5 text-sm font-bold transition-colors cursor-pointer relative"
+                style={{
+                  color: activeTab === "trending" ? "var(--m-accent)" : "var(--m-text-muted)",
+                  background: "transparent",
+                }}
+              >
+                {t.tabTrending}
+                {/* 활성 탭 밑줄 / Active tab underline */}
+                {activeTab === "trending" && (
+                  <span
+                    className="absolute bottom-0 left-0 right-0 h-0.5"
+                    style={{ background: "var(--m-accent)" }}
+                  />
+                )}
+              </button>
+              {/* SNS 화제 종목 탭 정보 툴팁 / Trending tab info tooltip */}
+              <InfoTooltip text={t.tooltipTrending} />
+            </div>
           </div>
 
           {/* Scan Now 버튼 + 데이터 소스 배지 + 종목 수 */}
@@ -444,50 +433,33 @@ function HomePageContent() {
               </span>
             )}
 
-            {/* 종목 수 표시 / Stock count display */}
+            {/* 종목 수 표시 + 검색 버튼 / Stock count display + search button */}
             {tickers.length > 0 && !loading && (
-              <span className="text-sm" style={{ color: "var(--m-text-muted)" }}>
-                {t.foundHotStocks(tickers.length)}
-              </span>
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-sm" style={{ color: "var(--m-text-muted)" }}>
+                  {t.foundHotStocks(tickers.length)}
+                </span>
+                <button
+                  onClick={() => setSearchModalOpen(true)}
+                  className="p-2 rounded-lg border transition-colors cursor-pointer"
+                  style={{
+                    background: "var(--m-card)",
+                    borderColor: "var(--m-accent)",
+                    color: "var(--m-accent)",
+                  }}
+                  title={t.searchButton}
+                  aria-label={t.searchButton}
+                >
+                  <Search size={14} />
+                </button>
+              </div>
             )}
           </div>
 
-          {/* #7: 수동 종목 검색 / Manual ticker search */}
-          <div className="flex items-center gap-2 mt-3">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value.toUpperCase())}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-              }}
-              placeholder={t.searchPlaceholder}
-              className="flex-1 max-w-xs px-3 py-2 text-sm rounded-lg border"
-              style={{
-                background: "var(--m-card)",
-                borderColor: "var(--m-border)",
-                color: "var(--m-text)",
-              }}
-              disabled={searching}
-            />
-            <button
-              onClick={handleSearch}
-              disabled={searching || !searchInput.trim()}
-              className="px-4 py-2 text-sm font-bold rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              style={{
-                background: "var(--m-card)",
-                borderColor: "var(--m-accent)",
-                color: "var(--m-accent)",
-              }}
-            >
-              {searching ? "..." : t.searchButton}
-            </button>
-          </div>
-
-          {/* #13: 탭별 안내 문구 (수정: 이전에 뒤바뀌어 있었음) */}
-          {/* #13: Per-tab notice (fix: was previously swapped) */}
+          {/* #13: 탭별 안내 문구 — 저평가 탭: 저평가 분석 기준 안내, 화제 탭: 소셜 버즈 시뮬레이션 안내 */}
+          {/* #13: Per-tab notice — undervalued tab: analysis criteria, trending tab: social buzz simulation */}
           <p className="mt-2 text-[10px]" style={{ color: "var(--m-moderate-color)" }}>
-            {activeTab === "trending" ? t.trendingNotice : t.socialBuzzNotice}
+            {activeTab === "undervalued" ? t.undervaluedNotice : t.socialBuzzNotice}
           </p>
         </div>
       </header>
@@ -570,6 +542,127 @@ function HomePageContent() {
           </div>
         )}
 
+        {/* 종목 랭킹 테이블 (점수 내림차순, 카드 그리드 위) */}
+        {/* Stock ranking table (sorted by score, above card grid) */}
+        {rankedTickers.length > 0 && (
+          <div
+            className="mb-6 rounded-xl border overflow-hidden"
+            style={{
+              background: "var(--m-card)",
+              borderColor: "var(--m-border)",
+            }}
+          >
+            {/* 랭킹 헤더 + 점수 설명 툴팁 / Ranking header + score info tooltip */}
+            <div
+              className="flex items-center gap-2 px-4 py-3 border-b"
+              style={{ borderColor: "var(--m-border)" }}
+            >
+              <h2
+                className="text-sm font-bold"
+                style={{ color: "var(--m-text)" }}
+              >
+                {t.rankingTitle}
+              </h2>
+              <InfoTooltip text={t.tooltipRankingScore} />
+            </div>
+
+            {/* 스크롤 가능한 테이블 (모바일 대응) / Scrollable table (mobile-friendly) */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs" style={{ color: "var(--m-text)" }}>
+                <thead>
+                  <tr
+                    className="border-b"
+                    style={{
+                      borderColor: "var(--m-border)",
+                      background: "var(--m-card-inner)",
+                    }}
+                  >
+                    <th className="px-4 py-2 text-left font-bold" style={{ color: "var(--m-text-muted)" }}>
+                      {t.rankingRank}
+                    </th>
+                    <th className="px-4 py-2 text-left font-bold" style={{ color: "var(--m-text-muted)" }}>
+                      {t.rankingTicker}
+                    </th>
+                    <th className="px-4 py-2 text-right font-bold" style={{ color: "var(--m-text-muted)" }}>
+                      {t.rankingScore}
+                    </th>
+                    <th className="px-4 py-2 text-right font-bold" style={{ color: "var(--m-text-muted)" }}>
+                      {t.rankingChange}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rankedTickers.map((ticker, index) => {
+                    const tickerScore = activeTab === "undervalued"
+                      ? calculateUndervaluedScore(ticker)
+                      : calculateScore(ticker);
+                    const changeColor = ticker.preMarketChangePercent > 0
+                      ? "var(--m-green)"
+                      : ticker.preMarketChangePercent < 0
+                        ? "var(--m-high)"
+                        : "var(--m-text-muted)";
+
+                    return (
+                      <tr
+                        key={ticker.symbol}
+                        className="border-b cursor-pointer transition-colors"
+                        style={{
+                          borderColor: "var(--m-border)",
+                        }}
+                        onClick={() => setSelectedTicker(ticker)}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.background = "var(--m-card-inner)";
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.background = "transparent";
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setSelectedTicker(ticker);
+                          }
+                        }}
+                      >
+                        <td
+                          className="px-4 py-2 font-bold"
+                          style={{ color: "var(--m-text-muted)" }}
+                        >
+                          {index + 1}
+                        </td>
+                        <td className="px-4 py-2 font-bold">
+                          {ticker.symbol}
+                        </td>
+                        <td className="px-4 py-2 text-right font-mono font-bold">
+                          <span
+                            style={{
+                              color: tickerScore.total / tickerScore.maxTotal >= 0.7
+                                ? "var(--m-high)"
+                                : tickerScore.total / tickerScore.maxTotal >= 0.45
+                                  ? "var(--m-moderate-color)"
+                                  : "var(--m-low-color)",
+                            }}
+                          >
+                            {tickerScore.total}/{tickerScore.maxTotal}
+                          </span>
+                        </td>
+                        <td
+                          className="px-4 py-2 text-right font-mono font-bold"
+                          style={{ color: changeColor }}
+                        >
+                          {ticker.preMarketChangePercent > 0 ? "+" : ""}
+                          {ticker.preMarketChangePercent.toFixed(1)}%
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* 종목 카드 그리드 (데스크톱 2열, 모바일 1열) */}
         {/* Ticker card grid (2-col desktop, 1-col mobile) */}
         {sortedTickers.length > 0 && (
@@ -607,6 +700,13 @@ function HomePageContent() {
           />
         );
       })()}
+
+      {/* 종목 검색 모달 / Stock search modal */}
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        scoringMode={activeTab}
+      />
 
       {/* 하단 면책 조항 배너 / Bottom risk disclaimer banner */}
       <footer
