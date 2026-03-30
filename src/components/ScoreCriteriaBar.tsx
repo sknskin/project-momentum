@@ -5,6 +5,7 @@
 
 import { ScoreCriterion, AnyCriterionKey } from "@/lib/types";
 import { useLanguage } from "@/lib/i18n";
+import InfoTooltip from "@/components/InfoTooltip";
 
 interface ScoreCriteriaBarProps {
   criterion: ScoreCriterion;
@@ -98,6 +99,7 @@ export default function ScoreCriteriaBar({ criterion }: ScoreCriteriaBarProps) {
   const { t } = useLanguage();
   const widthPercent = (criterion.score / criterion.maxScore) * 100;
   const translatedName = getTranslatedName(criterion.key, t);
+  const tooltipText = t.criteriaTooltips[criterion.key] || "";
 
   return (
     <div className="mb-2">
@@ -106,6 +108,8 @@ export default function ScoreCriteriaBar({ criterion }: ScoreCriteriaBarProps) {
       <div className="flex justify-between items-center mb-1">
         <span className="text-xs flex items-center gap-1" style={{ color: "var(--m-text)" }}>
           {translatedName}
+          {/* 기준 도움말 툴팁 / Criterion help tooltip */}
+          {tooltipText && <InfoTooltip text={tooltipText} />}
           {/* #2: 시뮬레이션 배지 / Simulated badge */}
           {criterion.isSimulated && (
             <span
