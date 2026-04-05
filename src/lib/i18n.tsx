@@ -69,22 +69,18 @@ interface Translations {
   marketOpen: string;
   afterHours: string;
   marketClosed: string;
-  // 스코어 기준 이름 (SNS 화제 종목 탭)
-  // Score criteria names (SNS Trending tab)
+  // 스코어 기준 이름 (SNS 화제 종목 탭, 8기준)
+  // Score criteria names (SNS Trending tab, 8 criteria)
   criteriaPreMarketVolume: string;
   criteriaPriceChange: string;
   criteriaPricePattern: string;
   criteriaNewsFreshness: string;
-  criteriaSectorSentiment: string;
   criteriaGapHold: string;
-  criteriaSocialBuzz: string;
   criteriaTradingValue: string;
   criteriaIntradayRange: string;
   criteriaTradingValueEfficiency: string;
-  criteriaMarketCapCategory: string;
-  criteriaConsecutiveUpDays: string;
-  // 스코어 기준 이름 (저평가 종목 탭)
-  // Score criteria names (Undervalued tab)
+  // 스코어 기준 이름 (저평가 종목 탭, 10기준)
+  // Score criteria names (Undervalued tab, 10 criteria)
   criteriaVolumeRatio: string;
   criteria52WeekLowProximity: string;
   criteriaPriceTrend: string;
@@ -92,11 +88,9 @@ interface Translations {
   criteriaSectorSentimentUV: string;
   criteria52WeekHighGap: string;
   criteriaInstitutionalVolume: string;
-  criteriaTradingValueVsMarketCap: string;
   criteriaPriceStability: string;
   criteriaSupportLevelProximity: string;
-  criteriaVolumeTrend: string;
-  criteriaBounceStrength: string;
+  criteriaBottomConfirmation: string;
   // 모달 라벨 / Modal labels
   modalPrevClose: string;
   modalDayHigh: string;
@@ -209,28 +203,22 @@ const ko: Translations = {
   marketClosed: "장 마감",
   criteriaPreMarketVolume: "프리마켓 거래량",
   criteriaPriceChange: "가격 변동률",
-  criteriaPricePattern: "가격 패턴",
-  criteriaNewsFreshness: "뉴스 최신도",
-  criteriaSectorSentiment: "섹터 심리",
-  criteriaGapHold: "갭 유지",
-  criteriaSocialBuzz: "소셜 버즈",
+  criteriaPricePattern: "52주 최고가 근접도",
+  criteriaNewsFreshness: "촉매 감지",
+  criteriaGapHold: "갭업 크기",
   criteriaTradingValue: "거래대금",
-  criteriaIntradayRange: "전일 대비 변동 폭",
-  criteriaTradingValueEfficiency: "거래대금 대비 가격 변동",
-  criteriaMarketCapCategory: "시가총액 규모",
-  criteriaConsecutiveUpDays: "연속 상승일",
+  criteriaIntradayRange: "장중 변동 폭",
+  criteriaTradingValueEfficiency: "거래대금 효율",
   criteriaVolumeRatio: "거래량 비율",
   criteria52WeekLowProximity: "52주 최저가 근접도",
-  criteriaPriceTrend: "가격 추세 패턴",
+  criteriaPriceTrend: "프리마켓 방향",
   criteriaPriceRecovery: "저가 대비 회복률",
-  criteriaSectorSentimentUV: "섹터 심리",
+  criteriaSectorSentimentUV: "가격 스프레드",
   criteria52WeekHighGap: "52주 최고가 갭",
-  criteriaInstitutionalVolume: "기관 관심 거래량",
-  criteriaTradingValueVsMarketCap: "거래대금 대비 시가총액",
+  criteriaInstitutionalVolume: "저가 부근 거래량",
   criteriaPriceStability: "가격 변동 안정성",
   criteriaSupportLevelProximity: "지지선 근접도",
-  criteriaVolumeTrend: "거래량 증가 추세",
-  criteriaBounceStrength: "반등 강도",
+  criteriaBottomConfirmation: "바닥 확인",
   modalPrevClose: "전일 종가",
   modalDayHigh: "당일 고가",
   modalDayLow: "당일 저가",
@@ -245,12 +233,15 @@ const ko: Translations = {
   modalEntryStrategy: "진입 전략",
   modalCatalysts: "촉매 이벤트",
   modalDisclaimerFooter: "이 정보는 투자 권유가 아닙니다",
-  riskDisclaimer: "⚠ 투자 위험 고지",
+  riskDisclaimer: "⚠ 투자 위험 고지 — 반드시 읽어주세요",
   disclaimerText:
     "이 도구는 교육 및 정보 제공 목적으로만 제공됩니다. 투자 조언을 구성하지 않습니다. " +
-    "소셜 버즈 데이터는 시뮬레이션이며 실제 소셜 미디어 분석에 기반하지 않습니다. " +
+    "일부 기준(소셜 버즈, 시가총액, 연속 상승일, 거래량 추세)은 시뮬레이션 데이터이며 총점의 17~25%를 차지합니다. " +
+    "가격 변동률·갭 크기 기준은 상승과 하락을 동일하게 취급하여 급락 종목도 높은 점수를 받을 수 있습니다. " +
+    "저평가 탭은 기술적 가격 데이터만 사용하며 P/E, P/B 등 재무제표 기반 분석이 포함되지 않습니다. " +
+    "진입 전략은 고정 비율 기반이며 실제 지지/저항선을 반영하지 않습니다. " +
     "거래 결정을 내리기 전에 항상 본인의 리서치를 수행하세요. 과거 수익률이 미래 수익을 보장하지 않습니다. " +
-    "주식 거래에는 손실 위험이 따릅니다.",
+    "주식 거래에는 원금 손실 위험이 따릅니다.",
   notFinancialAdvice: "투자 조언이 아닙니다",
   clickToRefresh: "클릭하여 새로고침",
   themeToggle: "테마 전환",
@@ -288,32 +279,26 @@ const ko: Translations = {
   tooltipRankingScore:
     "점수가 높을수록 해당 기준에 부합하는 종목입니다. 최대 24점.",
   criteriaTooltips: {
-    // SNS 화제 종목 기준 / SNS Trending criteria
+    // SNS 화제 종목 기준 (8개) / SNS Trending criteria (8)
     preMarketVolume: "프리마켓 시간대의 거래량 수준을 평가합니다. 높은 거래량은 시장 관심도를 나타냅니다.",
-    priceChange: "전일 종가 대비 프리마켓 가격 변동 폭을 측정합니다.",
+    priceChange: "프리마켓 양의 가격 변동만 점수화합니다. 하락은 위험 신호이므로 0점 처리됩니다.",
     pricePattern: "현재 가격이 52주 최고가에 얼마나 근접한지 평가합니다. 가까울수록 강한 상승 모멘텀입니다.",
-    newsFreshness: "실적 발표, FDA 승인, 계약 체결 등 주가에 영향을 줄 수 있는 촉매 이벤트 수를 평가합니다.",
-    sectorSentiment: "장중 고가-저가 스프레드로 가격의 안정성을 평가합니다. 스프레드가 작을수록 안정적입니다.",
-    gapHold: "전일 종가 대비 프리마켓 가격의 갭 크기를 측정합니다. 큰 갭은 강한 매수/매도 압력을 의미합니다.",
-    socialBuzz: "소셜 미디어에서의 언급 빈도를 평가합니다. (시뮬레이션 데이터)",
+    newsFreshness: "거래량 급증, 큰 가격 변동 등에서 자동 감지된 촉매 신호 수를 평가합니다. 실제 뉴스 피드 아님.",
+    gapHold: "전일 종가 대비 양의 갭(갭업)만 점수화합니다. 하락 갭은 위험 신호이므로 0점 처리됩니다.",
     tradingValue: "가격 × 거래량으로 산출되는 실제 거래 금액을 평가합니다. $50M 이상이면 높은 유동성입니다.",
     intradayRange: "전일 종가 대비 장중 고가-저가 범위를 측정합니다. 넓을수록 변동성이 큽니다.",
-    tradingValueEfficiency: "거래대금 대비 가격 변동률의 효율성을 평가합니다. 적은 거래대금으로 큰 가격 변동이면 높은 효율입니다.",
-    marketCapCategory: "시가총액 규모를 평가합니다. 소형주일수록 폭발적 성장 가능성이 높습니다. (시뮬레이션 데이터)",
-    consecutiveUpDays: "연속으로 상승한 일수를 측정합니다. 3일 이상 연속 상승은 강한 모멘텀 신호입니다. (시뮬레이션 데이터)",
-    // 저평가 종목 기준 / Undervalued criteria
+    tradingValueEfficiency: "양의 가격 변동에 대해서만 거래대금 대비 효율성을 평가합니다. 적은 거래대금으로 큰 상승이면 높은 효율.",
+    // 저평가 종목 기준 (10개) / Undervalued criteria (10)
     volumeRatio: "평균 거래량 대비 현재 거래량의 비율로 시장 관심도를 평가합니다. 2배 이상이면 주목할 만합니다.",
     weekLowProximity: "현재 가격이 52주 최저가에 얼마나 가까운지 평가합니다. 가까울수록 저평가 가능성이 높습니다.",
-    priceTrend: "가격의 상승/하락 추세를 패턴 분석합니다. 하락 후 횡보 또는 반등 신호를 감지합니다.",
-    priceRecovery: "52주 최저가에서 얼마나 회복했는지 측정합니다. 적절한 회복은 바닥 확인 신호입니다.",
-    sectorSentimentUV: "해당 종목이 속한 섹터의 전반적인 투자 심리를 평가합니다.",
+    priceTrend: "프리마켓 양의 가격 변동을 측정합니다. 단일 시점 데이터이므로 장기 추세가 아닌 참고 지표입니다.",
+    priceRecovery: "당일 저가에서 현재 가격까지의 회복률을 측정합니다. 회복은 매수세 유입 신호입니다.",
+    sectorSentimentUV: "장중 고가-저가 스프레드로 가격 안정성을 평가합니다. 스프레드가 작을수록 안정적입니다.",
     weekHighGap: "52주 최고가와의 괴리율로 상승 여력을 평가합니다. 괴리가 클수록 회복 시 수익 잠재력이 높습니다.",
-    institutionalVolume: "기관 투자자의 관심을 나타내는 대량 거래 신호를 평가합니다.",
-    tradingValueVsMarketCap: "시가총액 대비 거래대금 비율로 매집 신호를 감지합니다. 높을수록 적극적 매수가 진행 중입니다.",
+    institutionalVolume: "거래량이 높으면서 52주 최저가 근처인 종목을 감지합니다. 저가 부근 매수세 유입 신호입니다.",
     priceStability: "가격 변동의 안정성을 평가합니다. 안정적일수록 저평가 종목의 바닥 확인 가능성이 높습니다.",
-    supportLevelProximity: "현재 가격이 기술적 지지선에 얼마나 가까운지 평가합니다. 지지선 근처는 반등 가능성이 높습니다.",
-    volumeTrend: "거래량이 점진적으로 증가하는 추세인지 평가합니다. 증가 추세는 관심 증가 신호입니다.",
-    bounceStrength: "저점에서의 반등 세기를 측정합니다. 강한 반등은 매수세 유입을 의미합니다.",
+    supportLevelProximity: "52주 최저가와 당일 저가의 중간값을 지지선으로 추정합니다. 지지선 근처는 반등 가능성이 높습니다.",
+    bottomConfirmation: "52주 최저가 대비 10~25% 반등 = 바닥 확인 sweet spot. 너무 가까우면 아직 하락 중, 너무 멀면 이미 회복됨.",
   },
 };
 
@@ -359,28 +344,22 @@ const en: Translations = {
   marketClosed: "MARKET CLOSED",
   criteriaPreMarketVolume: "Pre-Market Volume",
   criteriaPriceChange: "Price Change",
-  criteriaPricePattern: "Price Pattern",
-  criteriaNewsFreshness: "News Freshness",
-  criteriaSectorSentiment: "Sector Sentiment",
-  criteriaGapHold: "Gap Hold",
-  criteriaSocialBuzz: "Social Buzz",
+  criteriaPricePattern: "52W High Proximity",
+  criteriaNewsFreshness: "Catalyst Detection",
+  criteriaGapHold: "Gap Up Size",
   criteriaTradingValue: "Trading Value",
   criteriaIntradayRange: "Intraday Range",
   criteriaTradingValueEfficiency: "Trading Value Efficiency",
-  criteriaMarketCapCategory: "Market Cap Category",
-  criteriaConsecutiveUpDays: "Consecutive Up Days",
   criteriaVolumeRatio: "Volume Ratio",
   criteria52WeekLowProximity: "52W Low Proximity",
-  criteriaPriceTrend: "Price Trend Pattern",
+  criteriaPriceTrend: "Pre-Market Direction",
   criteriaPriceRecovery: "Price Recovery from Lows",
-  criteriaSectorSentimentUV: "Sector Sentiment",
+  criteriaSectorSentimentUV: "Price Spread",
   criteria52WeekHighGap: "52W High Gap",
-  criteriaInstitutionalVolume: "Institutional Volume Interest",
-  criteriaTradingValueVsMarketCap: "Trading Value vs Market Cap",
+  criteriaInstitutionalVolume: "Volume Near Lows",
   criteriaPriceStability: "Price Stability",
   criteriaSupportLevelProximity: "Support Level Proximity",
-  criteriaVolumeTrend: "Volume Trend",
-  criteriaBounceStrength: "Bounce Strength",
+  criteriaBottomConfirmation: "Bottom Confirmation",
   modalPrevClose: "Previous Close",
   modalDayHigh: "Day High",
   modalDayLow: "Day Low",
@@ -395,12 +374,15 @@ const en: Translations = {
   modalEntryStrategy: "Entry Strategy",
   modalCatalysts: "Catalyst Events",
   modalDisclaimerFooter: "This is not investment advice",
-  riskDisclaimer: "⚠ RISK DISCLAIMER",
+  riskDisclaimer: "⚠ RISK DISCLAIMER — Please Read",
   disclaimerText:
     "This tool is for educational and informational purposes only. It does not constitute financial advice. " +
-    "Social buzz data is SIMULATED and not based on real social media analysis. " +
+    "Some criteria (social buzz, market cap, consecutive up days, volume trend) use SIMULATED data accounting for 17-25% of the total score. " +
+    "Price change and gap criteria treat rallies and crashes identically — a -8% drop scores the same as a +8% gain. " +
+    "The 'Undervalued' tab uses only technical price data; no fundamental analysis (P/E, P/B, etc.) is included. " +
+    "Entry strategies use fixed percentages and do not reflect actual support/resistance levels. " +
     "Always do your own research before making trading decisions. Past performance does not guarantee future results. " +
-    "Trading stocks involves risk of loss.",
+    "Trading stocks involves risk of loss of principal.",
   notFinancialAdvice: "Not Financial Advice",
   clickToRefresh: "Click to refresh now",
   themeToggle: "Toggle theme",
@@ -438,32 +420,26 @@ const en: Translations = {
   tooltipRankingScore:
     "A higher score means the stock better matches the criteria. Maximum 24 points.",
   criteriaTooltips: {
-    // SNS Trending criteria
+    // SNS Trending criteria (8)
     preMarketVolume: "Evaluates pre-market trading volume levels. High volume indicates strong market interest.",
-    priceChange: "Measures the percentage price change from the previous close during pre-market.",
+    priceChange: "Only scores positive pre-market price changes. Declines are treated as risk signals and score 0.",
     pricePattern: "Evaluates how close the current price is to its 52-week high. Closer means stronger upward momentum.",
-    newsFreshness: "Counts catalyst events like earnings, FDA approvals, or contracts that may impact the stock.",
-    sectorSentiment: "Evaluates price stability using the intraday high-low spread. Smaller spread means more stable.",
-    gapHold: "Measures the gap size between the previous close and pre-market price. Large gaps indicate strong buying/selling pressure.",
-    socialBuzz: "Evaluates social media mention frequency. (Simulated data)",
+    newsFreshness: "Counts auto-detected catalyst signals from volume surges and large price moves. Not a real news feed.",
+    gapHold: "Only scores positive gaps (gap ups). Downward gaps are risk signals and score 0.",
     tradingValue: "Evaluates actual trading value (price × volume). Over $50M indicates high liquidity.",
     intradayRange: "Measures the intraday high-low range relative to the previous close. Wider means more volatile.",
-    tradingValueEfficiency: "Evaluates price movement efficiency relative to trading value. Large price moves on small volume = high efficiency.",
-    marketCapCategory: "Evaluates market cap size. Smaller cap stocks have higher explosive growth potential. (Simulated data)",
-    consecutiveUpDays: "Counts consecutive up days. 3+ consecutive up days is a strong momentum signal. (Simulated data)",
-    // Undervalued criteria
+    tradingValueEfficiency: "Evaluates upside efficiency only. Large positive moves on small volume = high efficiency.",
+    // Undervalued criteria (10)
     volumeRatio: "Evaluates market interest via the ratio of current volume to average volume. 2x or more is noteworthy.",
     weekLowProximity: "Evaluates proximity to the 52-week low. Closer means higher undervaluation potential.",
-    priceTrend: "Analyzes the price trend pattern. Detects consolidation or reversal signals after a decline.",
-    priceRecovery: "Measures how much the price has recovered from its 52-week low. Moderate recovery confirms a bottom.",
-    sectorSentimentUV: "Evaluates overall investment sentiment for the stock's sector.",
-    weekHighGap: "Evaluates upside potential based on the gap from the 52-week high. Larger gap means higher recovery potential.",
-    institutionalVolume: "Evaluates large-volume trading signals indicating institutional investor interest.",
-    tradingValueVsMarketCap: "Detects accumulation signals via trading value to market cap ratio. Higher ratio suggests active buying.",
+    priceTrend: "Measures positive pre-market change. Single data point — a reference indicator, not a long-term trend.",
+    priceRecovery: "Measures recovery from the day low to current price. Recovery signals buying pressure.",
+    sectorSentimentUV: "Evaluates price stability via intraday high-low spread. Smaller spread means more stable.",
+    weekHighGap: "Evaluates upside potential based on the gap from the 52-week high. Larger gap = higher recovery potential.",
+    institutionalVolume: "Detects high volume near 52-week lows — a buying pressure signal at low prices.",
     priceStability: "Evaluates price stability. More stable prices suggest a confirmed bottom for undervalued stocks.",
-    supportLevelProximity: "Evaluates how close the current price is to technical support levels. Near support = higher bounce probability.",
-    volumeTrend: "Evaluates whether trading volume shows a gradual increasing trend. Increasing trend signals growing interest.",
-    bounceStrength: "Measures the strength of the bounce from recent lows. Strong bounces indicate buying pressure.",
+    supportLevelProximity: "Estimates support from the midpoint of 52W low and day low. Near support = higher bounce probability.",
+    bottomConfirmation: "10-25% bounce from 52W low = sweet spot (confirmed bottom, still undervalued). Too close = still falling, too far = already recovered.",
   },
 };
 

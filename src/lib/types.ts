@@ -8,14 +8,10 @@ export type CriterionKey =
   | "priceChange"
   | "pricePattern"
   | "newsFreshness"
-  | "sectorSentiment"
   | "gapHold"
-  | "socialBuzz"
   | "tradingValue"
   | "intradayRange"
-  | "tradingValueEfficiency"
-  | "marketCapCategory"
-  | "consecutiveUpDays";
+  | "tradingValueEfficiency";
 
 /** 저평가 종목 스코어링 기준 키 타입
  *  Undervalued stocks scoring criterion key type */
@@ -27,11 +23,9 @@ export type UndervaluedCriterionKey =
   | "sectorSentimentUV"
   | "weekHighGap"
   | "institutionalVolume"
-  | "tradingValueVsMarketCap"
   | "priceStability"
   | "supportLevelProximity"
-  | "volumeTrend"
-  | "bounceStrength";
+  | "bottomConfirmation";
 
 /** 통합 스코어링 기준 키 타입
  *  Union scoring criterion key type */

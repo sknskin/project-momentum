@@ -22,14 +22,10 @@ function getTranslatedName(
     criteriaPriceChange: string;
     criteriaPricePattern: string;
     criteriaNewsFreshness: string;
-    criteriaSectorSentiment: string;
     criteriaGapHold: string;
-    criteriaSocialBuzz: string;
     criteriaTradingValue: string;
     criteriaIntradayRange: string;
     criteriaTradingValueEfficiency: string;
-    criteriaMarketCapCategory: string;
-    criteriaConsecutiveUpDays: string;
     criteriaVolumeRatio: string;
     criteria52WeekLowProximity: string;
     criteriaPriceTrend: string;
@@ -37,28 +33,22 @@ function getTranslatedName(
     criteriaSectorSentimentUV: string;
     criteria52WeekHighGap: string;
     criteriaInstitutionalVolume: string;
-    criteriaTradingValueVsMarketCap: string;
     criteriaPriceStability: string;
     criteriaSupportLevelProximity: string;
-    criteriaVolumeTrend: string;
-    criteriaBounceStrength: string;
+    criteriaBottomConfirmation: string;
   }
 ): string {
   const map: Record<AnyCriterionKey, string> = {
-    // SNS 화제 종목 기준 / SNS Trending criteria
+    // SNS 화제 종목 기준 (8개) / SNS Trending criteria (8)
     preMarketVolume: t.criteriaPreMarketVolume,
     priceChange: t.criteriaPriceChange,
     pricePattern: t.criteriaPricePattern,
     newsFreshness: t.criteriaNewsFreshness,
-    sectorSentiment: t.criteriaSectorSentiment,
     gapHold: t.criteriaGapHold,
-    socialBuzz: t.criteriaSocialBuzz,
     tradingValue: t.criteriaTradingValue,
     intradayRange: t.criteriaIntradayRange,
     tradingValueEfficiency: t.criteriaTradingValueEfficiency,
-    marketCapCategory: t.criteriaMarketCapCategory,
-    consecutiveUpDays: t.criteriaConsecutiveUpDays,
-    // 저평가 종목 기준 / Undervalued criteria
+    // 저평가 종목 기준 (10개) / Undervalued criteria (10)
     volumeRatio: t.criteriaVolumeRatio,
     weekLowProximity: t.criteria52WeekLowProximity,
     priceTrend: t.criteriaPriceTrend,
@@ -66,11 +56,9 @@ function getTranslatedName(
     sectorSentimentUV: t.criteriaSectorSentimentUV,
     weekHighGap: t.criteria52WeekHighGap,
     institutionalVolume: t.criteriaInstitutionalVolume,
-    tradingValueVsMarketCap: t.criteriaTradingValueVsMarketCap,
     priceStability: t.criteriaPriceStability,
     supportLevelProximity: t.criteriaSupportLevelProximity,
-    volumeTrend: t.criteriaVolumeTrend,
-    bounceStrength: t.criteriaBounceStrength,
+    bottomConfirmation: t.criteriaBottomConfirmation,
   };
   return map[key];
 }

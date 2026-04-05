@@ -46,15 +46,10 @@ export const SCREENER_MAX_TICKERS = 20;
 /** 스코어링 기준 최대 점수 / Max score per criterion */
 export const MAX_SCORE_PER_CRITERION = 2;
 
-/** 전체 기준 개수 / Total number of criteria */
-export const TOTAL_CRITERIA_COUNT = 12;
-
-/** 최대 총점 / Maximum total score */
-export const MAX_TOTAL_SCORE = MAX_SCORE_PER_CRITERION * TOTAL_CRITERIA_COUNT;
-
-/** 시그널 임계값 / Signal thresholds */
-export const HIGH_SIGNAL_THRESHOLD = 18;
-export const MODERATE_SIGNAL_THRESHOLD = 10;
+/** 시그널 판정 비율 (maxTotal 대비) — 기준 개수와 무관하게 동작
+ *  Signal threshold ratios (vs maxTotal) — works regardless of criteria count */
+export const HIGH_SIGNAL_RATIO = 0.75;
+export const MODERATE_SIGNAL_RATIO = 0.42;
 
 /** 거래대금 임계값 ($) / Trading value thresholds ($) */
 export const TRADING_VALUE_HIGH = 50_000_000;
@@ -64,28 +59,22 @@ export const TRADING_VALUE_MODERATE = 10_000_000;
 export const INTRADAY_RANGE_HIGH = 10;
 export const INTRADAY_RANGE_MODERATE = 5;
 
-/** 시가총액 카테고리 임계값 ($) / Market cap category thresholds ($) */
-export const MARKET_CAP_LARGE = 10_000_000_000;
-export const MARKET_CAP_MID = 2_000_000_000;
-
-/** 연속 상승일 임계값 / Consecutive up days thresholds */
-export const CONSECUTIVE_UP_DAYS_HIGH = 3;
-export const CONSECUTIVE_UP_DAYS_MODERATE = 2;
-
-/** 저평가: 거래대금 대비 시가총액 비율 임계값 (%)
- *  Undervalued: Trading value vs market cap ratio thresholds (%) */
-export const ACCUMULATION_RATIO_HIGH = 5;
-export const ACCUMULATION_RATIO_MODERATE = 2;
+/** 저평가: 가격 안정성 스프레드 임계값은 아래로 이동
+ *  (시뮬레이션 기준 관련 상수 제거: MARKET_CAP, CONSECUTIVE_UP_DAYS, ACCUMULATION_RATIO) */
 
 /** 저평가: 가격 안정성 스프레드 임계값 (%)
  *  Undervalued: Price stability spread thresholds (%) */
 export const STABILITY_SPREAD_HIGH = 2;
 export const STABILITY_SPREAD_MODERATE = 5;
 
-/** 저평가: 반등 강도 임계값 (%)
- *  Undervalued: Bounce strength thresholds (%) */
-export const BOUNCE_STRENGTH_HIGH = 20;
-export const BOUNCE_STRENGTH_MODERATE = 10;
+/** 저평가: 바닥 확인 sweet spot (52주 최저가 대비 반등률 %)
+ *  Undervalued: Bottom confirmation sweet spot (bounce % from 52W low)
+ *  10~25% 반등 = 바닥 확인 + 아직 저평가 구간 (2점)
+ *  5~35% 반등 = 회복 초기 또는 중기 (1점)  */
+export const BOUNCE_SWEET_SPOT_MIN = 10;
+export const BOUNCE_SWEET_SPOT_MAX = 25;
+export const BOUNCE_WIDER_MIN = 5;
+export const BOUNCE_WIDER_MAX = 35;
 
 /** 거래량 비율 임계값 / Volume ratio thresholds */
 export const VOLUME_RATIO_HIGH = 2.0;
@@ -110,9 +99,7 @@ export const CLOSE_TO_52W_HIGH_THRESHOLD = 10;
 export const GAP_LARGE_THRESHOLD = 5.0;
 export const GAP_MODERATE_THRESHOLD = 2.0;
 
-/** 소셜 버즈 시뮬레이션 범위 / Social buzz simulation range */
-export const SOCIAL_BUZZ_MIN = 10;
-export const SOCIAL_BUZZ_MAX = 100;
+/** (소셜 버즈 시뮬레이션 상수 제거 — 시뮬레이션 기준 삭제됨) */
 
 /** 저평가 스코어링: 52주 최저가 근접 임계값 (%)
  *  Undervalued scoring: 52-week low proximity thresholds (%) */
